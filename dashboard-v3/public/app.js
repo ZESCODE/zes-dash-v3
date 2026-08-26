@@ -1,98 +1,196 @@
-// zed-dash-v4 client — renders ONLY what the server returns. No invented values.
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : null);
+// ZES OS Dashboard v3 — frontend (vanilla ES modules, no build step)
+const app = document.getElementById("app");
+const nav = document.getElementById("nav");
+const statusDot = document.getElementById("status-dot");
+const statusText = document.getElementById("status-text");
+const clock = document.getElementById("clock");
 
-async function getJSON(url) {
-  try {
-    const r = await fetch(url, { cache: "no-store" });
-    return await r.json();
-  } catch {
-    return { unavailable: true };
-  }
+const STATUS_LABEL = { running: "running", active: "active", paused: "paused", error: "error", unknown: "unknown" };
+const STATUS_COLOR = { running: "green", active: "green", paused: "orange", error: "red", unknown: "gray" };
+
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(path + " → " + r.status);
+  return r.json();
 }
 
-function unavail(el, msg = "unavailable") {
-  el.innerHTML = `<span class="badge unavailable">${msg}</span>`;
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html != null) e.innerHTML = html;
+  return e;
 }
 
-async function loadStats() {
-  const d = await getJSON("/api/usage");
-  const el = $("stats");
-  if (!d || d.unavailable) {
-    el.innerHTML = "";
-    for (let i = 0; i < 4; i++) {
-      const c = document.createElement("div");
-      c.className = "card glass";
-      c.innerHTML = `<div class="lbl">—</div><div class="val muted">unavailable</div>`;
-      el.appendChild(c);
-    }
-    return;
-  }
-  const cards = [
-    ["Total requests", fmt(d.totalRequests), "green"],
-    ["Prompt tokens", fmt(d.totalPromptTokens), "blue"],
-    ["Cached tokens", fmt(d.totalCachedTokens), "orange"],
-    ["Spend (USD)", d.totalCost != null ? "$" + Number(d.totalCost).toFixed(2) : "unavailable", "red"],
-  ];
-  el.innerHTML = cards.map(([label, value]) => `
-    <div class="card glass">
-      <div class="lbl">${label}</div>
-      <div class="val">${value ?? "—"}</div>
-    </div>`).join("");
+function glassCard(title, body, tone = "blue") {
+  const c = el("div", `glass glass-card glass-frost-${tone}`);
+  c.appendChild(el("div", "card-title", title));
+  const b = el("div", "card-body");
+  b.innerHTML = body;
+  c.appendChild(b);
+  return c;
 }
 
-async function loadFleet() {
-  const d = await getJSON("/api/status");
-  const el = $("fleet");
-  if (!d || !d.services?.length) return unavail(el);
-  el.innerHTML = d.services.map((s) => `
-    <div class="row">
-      <span><span class="dot ${s.up ? "up" : "down"}"></span>${s.name} <span style="opacity:.5">:${s.port}</span></span>
-      <span class="badge ${s.up ? "active" : "unknown"}">${s.up ? "up" : "down"}</span>
-    </div>`).join("");
+function dot(color) {
+  return `<span class="dot ${color}"></span>`;
 }
 
-async function loadProviders() {
-  const d = await getJSON("/api/providers");
-  const el = $("providers");
-  const conns = d?.connections;
-  if (!conns?.length) return unavail(el, "no connections / unavailable");
-  el.innerHTML = conns.slice(0, 8).map((c) => {
-    const st = c.testStatus || "unknown";
-    return `
-    <div class="row">
-      <span>${c.name || c.provider} <span style="opacity:.45">· ${c.provider}</span></span>
-      <span class="badge ${st === "active" ? "active" : "unknown"}">${st}</span>
-    </div>`;
+// ---------- views ----------
+async function viewFleet() {
+  const [fleet, tasks] = await Promise.all([api("/api/fleet"), api("/api/tasks")]);
+  const company = fleet.company;
+  const header = company
+    ? `<div class="company glass glass-card glass-frost-blue">
+         <div class="card-title">${esc(company.name || "Company")}</div>
+         <div class="card-body">${esc(company.description || "")}
+           <div class="meta">status: ${company.status || "?"} · budget: $${((company.monthlyBudgetCents||0)/100).toFixed(2)}/mo · spent: $${((company.spentMonthCents||0)/100).toFixed(2)}</div>
+         </div></div>`
+    : `<div class="muted">no company record</div>`;
+
+  const tree = buildOrgTree(fleet.agents);
+  const treeHtml = renderOrgTree(tree);
+
+  const tiles = fleet.agents.map((a) => {
+    const tone = STATUS_COLOR[a.status] || "gray";
+    const myTasks = tasks.tasks.filter((t) => t.assigned_to === a.id);
+    const lastEv = "";
+    return `<div class="glass glass-card glass-frost-${tone} agent-tile">
+      <div class="card-title">${dot(tone)} ${esc(a.name || a.id)}</div>
+      <div class="card-body">
+        <div class="meta">${esc(a.role || "")}</div>
+        <div class="meta">status: ${STATUS_LABEL[a.status] || a.status} · tasks: ${myTasks.length}</div>
+      </div></div>`;
+  }).join("");
+
+  app.innerHTML = header + `<h2 class="section">Org Chart</h2><div class="org">${treeHtml}</div>
+    <h2 class="section">Agents</h2><div class="grid">${tiles}</div>`;
+}
+
+function buildOrgTree(agents) {
+  const map = new Map();
+  agents.forEach((a) => map.set(a.id, { ...a, children: [] }));
+  const roots = [];
+  map.forEach((a) => {
+    if (a.reportsTo && map.has(a.reportsTo)) map.get(a.reportsTo).children.push(a);
+    else roots.push(a);
+  });
+  return roots;
+}
+
+function renderOrgTree(nodes, depth = 0) {
+  return nodes.map((n) => {
+    const tone = STATUS_COLOR[n.status] || "gray";
+    const child = n.children.length ? `<div class="org-children">${renderOrgTree(n.children, depth + 1)}</div>` : "";
+    return `<div class="org-node" style="margin-left:${depth * 18}px">
+      <div class="glass glass-card glass-frost-${tone} org-card">
+        <div class="card-title">${dot(tone)} ${esc(n.name || n.id)}</div>
+        <div class="card-body meta">${esc(n.role || "")} · ${STATUS_LABEL[n.status] || n.status}</div>
+      </div>${child}</div>`;
   }).join("");
 }
 
-async function loadModels() {
-  const d = await getJSON("/api/models");
-  const el = $("models");
-  if (!d || (!d["9router"] && !d.zesrouter)) return unavail(el);
-  let html = "";
-  for (const [gw, info] of Object.entries(d)) {
-    html += `<div class="row">
-      <span>${gw}</span>
-      <span>${info ? `<b style="color:#93c5fd">${info.count}</b> models <span style="opacity:.5;font-size:11px">e.g. ${info.sample.slice(0,2).join(", ")}</span>` : `<span class="badge unavailable">unavailable</span>`}</span>
-    </div>`;
+async function viewTasks() {
+  const { tasks } = await api("/api/tasks");
+  const cols = ["pending", "running", "completed", "failed"];
+  const colsHtml = cols.map((col) => {
+    const items = tasks.filter((t) => t.status === col);
+    const cards = items.map((t) => {
+      const tone = col === "running" ? "green" : col === "failed" ? "red" : col === "pending" ? "orange" : "blue";
+      const attempts = (t.attempts || []).map((a) => `${esc(a.agent || "")}:${a.code ?? "?"} (${a.ms ?? "?"}ms)`).join("<br>");
+      const parent = t.parent && t.parent !== "null" ? `<div class="meta">parent: ${esc(t.parent)}</div>` : "";
+      return `<div class="glass glass-card glass-frost-${tone} task-card">
+        <div class="card-title">${esc(t.title || t.id)}</div>
+        <div class="card-body meta">
+          ${esc(t.id)} · ${esc(t.assigned_to || "unassigned")} · ${esc(t.priority || "")}
+          ${parent}
+          ${attempts ? `<div class="attempts">${attempts}</div>` : ""}
+          ${t.result_tail ? `<details><summary>output</summary><pre>${esc(t.result_tail.slice(0, 500))}</pre></details>` : ""}
+        </div></div>`;
+    }).join("") || `<div class="muted">empty</div>`;
+    return `<div class="kanban-col"><div class="col-head">${col} (${items.length})</div>${cards}</div>`;
+  }).join("");
+  app.innerHTML = `<div class="kanban">${colsHtml}</div>`;
+}
+
+async function viewActivity() {
+  const { events } = await api("/api/activity?limit=200");
+  if (!events.length) { app.innerHTML = `<div class="muted">event bus empty / unavailable</div>`; return; }
+  const rows = events.slice().reverse().map((e) => {
+    const tone = (e.type || "").includes("fail") || (e.type || "").includes("error") ? "red"
+      : (e.type || "").includes("completed") ? "green" : "blue";
+    const ts = e.ts ? new Date(e.ts).toLocaleTimeString() : "";
+    return `<tr>
+      <td class="mono">${ts}</td>
+      <td>${dot(tone)}<span class="badge glass-frost-${tone}">${esc(e.type || "")}</span></td>
+      <td>${esc(e.source || "")}</td>
+      <td>${esc(e.agent || "")}</td>
+      <td class="meta">${esc(summary(e.payload))}</td></tr>`;
+  }).join("");
+  app.innerHTML = `<div class="glass glass-card"><table class="log"><thead><tr><th>time</th><th>type</th><th>source</th><th>agent</th><th>payload</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function summary(p) {
+  if (!p) return "";
+  if (p.title) return p.title;
+  if (p.exit_code != null) return `exit ${p.exit_code} · ${p.duration_ms ?? "?"}ms`;
+  return JSON.stringify(p).slice(0, 120);
+}
+
+async function viewInfra() {
+  const [status, infra] = await Promise.all([api("/api/status"), api("/api/infra")]);
+  const svc = status.services.map((s) => {
+    const tone = s.up ? "green" : "red";
+    return `<div class="glass glass-card glass-frost-${tone} svc">
+      <div class="card-title">${dot(tone)} ${esc(s.name)}</div>
+      <div class="card-body meta">:${s.port} · ${s.up ? "up" : "unreachable"}</div></div>`;
+  }).join("");
+
+  const usage = infra.usage && !infra.usage.unavailable ? infra.usage : null;
+  const usageHtml = usage
+    ? `<div class="glass glass-card glass-frost-blue"><div class="card-title">Usage</div><div class="card-body meta">
+        requests: ${usage.totalRequests ?? "?"}<br>tokens: ${usage.totalPromptTokens ?? "?"}+${usage.totalCompletionTokens ?? "?"}
+        <br>cached: ${usage.totalCachedTokens ?? "?"}<br>cost: $${usage.totalCost ?? "?"}</div></div>`
+    : `<div class="glass glass-card glass-frost-red"><div class="card-title">Usage</div><div class="card-body meta">unavailable</div></div>`;
+
+  const m = infra.models || {};
+  const modelsHtml = ["9router", "zesrouter"].map((k) => {
+    const mo = m[k] || {};
+    const tone = mo.count != null ? "green" : "red";
+    return `<div class="glass glass-card glass-frost-${tone}"><div class="card-title">${k} models</div>
+      <div class="card-body meta">count: ${mo.count ?? "unavailable"}<br>${(mo.sample || []).map(esc).join("<br>")}</div></div>`;
+  }).join("");
+
+  app.innerHTML = `<h2 class="section">Services</h2><div class="grid">${svc}</div>
+    <h2 class="section">Usage & Models</h2><div class="grid">${usageHtml}${modelsHtml}</div>`;
+}
+
+// ---------- router ----------
+const routes = { "/": viewFleet, "/tasks": viewTasks, "/activity": viewActivity, "/infra": viewInfra };
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function route() {
+  const hash = location.hash.replace(/^#/, "") || "/";
+  [...nav.children].forEach((a) => a.classList.toggle("active", a.dataset.route === hash));
+  app.innerHTML = `<div class="muted">loading…</div>`;
+  try {
+    await (routes[hash] || viewFleet)();
+    setStatus(true);
+  } catch (e) {
+    app.innerHTML = `<div class="glass glass-card glass-frost-red"><div class="card-title">error</div><div class="card-body mono">${esc(e.message)}</div></div>`;
+    setStatus(false);
   }
-  el.innerHTML = html;
 }
 
-async function loadLog(name) {
-  const d = await getJSON(`/api/logs?name=${name}`);
-  const el = $(`log-${name}`);
-  if (!d || d.unavailable || !d.lines) { el.textContent = "// log unavailable"; return; }
-  el.textContent = d.lines.join("\n");
+function setStatus(ok) {
+  statusDot.className = "dot " + (ok ? "green" : "red");
+  statusText.textContent = ok ? "live" : "degraded";
 }
 
-async function refresh() {
-  await Promise.all([
-    loadStats(), loadFleet(), loadProviders(), loadModels(),
-    loadLog("bitrouter"), loadLog("zen-relay"),
-  ]);
+function tick() {
+  clock.textContent = new Date().toLocaleTimeString();
 }
-refresh();
-setInterval(refresh, 10000);
+setInterval(tick, 1000); tick();
+window.addEventListener("hashchange", route);
+route();

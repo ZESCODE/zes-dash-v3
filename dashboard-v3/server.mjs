@@ -1,138 +1,164 @@
-// zed-dash-v4 — real-data-only dashboard server (port 7070)
-// Every /api/* endpoint returns live data from local services or files.
-// If a source is unreachable, the endpoint says so — nothing is fabricated.
+// ~/zes-os/dashboard-v3/server.mjs
+// ZES OS Dashboard v3 — real-data-only orchestration dashboard.
+// Stack: single Node ESM http server (node:http), zero runtime deps.
+// Every /api/* route reads a LIVE source (event bus, hermes json, local HTTP APIs).
+// If a source is unreachable, the route reports it honestly (no fabricated data).
 import http from "node:http";
-import net from "node:net";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT) || 7070;
-const ROOT = path.dirname(new URL(import.meta.url).pathname);
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, "public");
-const LOGDIR = "/data/data/com.termux/files/home/logs";
 const HOME = process.env.HOME || "/data/data/com.termux/files/home";
+const HERMES = path.join(HOME, ".hermes");
+const BUS = path.join(HOME, ".zes", "bus", "events.jsonl");
 
-const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml" };
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+};
 
 // ---------- helpers ----------
-function fetchJson(url, timeoutMs = 5000) {
-  return new Promise((resolve) => {
-    const req = http.get(url, { timeout: timeoutMs, headers: { accept: "application/json" } }, (res) => {
-      // follow one redirect (9router /v1/* can 307 -> /dashboard for UI paths only; keep for safety)
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && !url.includes(res.headers.location)) {
-        res.resume();
-        const next = new URL(res.headers.location, url).toString();
-        return resolve(fetchJson(next, timeoutMs));
-      }
-      let body = "";
-      res.on("data", (c) => (body += c));
-      res.on("end", () => {
-        try { resolve({ ok: res.statusCode < 400, status: res.statusCode, data: JSON.parse(body) }); }
-        catch { resolve({ ok: false, status: res.statusCode, data: null }); }
-      });
-    });
-    req.on("timeout", () => { req.destroy(); resolve({ ok: false, status: 0, data: null }); });
-    req.on("error", () => resolve({ ok: false, status: 0, data: null }));
-  });
-}
-
-function probePort(port, timeoutMs = 1500) {
-  return new Promise((resolve) => {
-    const s = net.connect({ host: "127.0.0.1", port, timeout: timeoutMs });
-    s.on("connect", () => { s.destroy(); resolve(true); });
-    s.on("error", () => resolve(false));
-    s.on("timeout", () => { s.destroy(); resolve(false); });
-  });
-}
-
-function tailFile(file, lines = 12) {
+function readJsonSafe(p) {
   try {
-    const raw = fs.readFileSync(file, "utf8");
-    const arr = raw.trimEnd().split("\n");
-    return arr.slice(-lines).map((l) =>
-      // strip ANSI color codes for display
-      l.replace(/\x1b\[[0-9;]*m/g, "")
-    );
+    return JSON.parse(fs.readFileSync(p, "utf8"));
   } catch {
     return null;
   }
 }
 
-// ---------- api ----------
+function readJsonlTail(p, limit = 100) {
+  try {
+    const lines = fs.readFileSync(p, "utf8").split("\n").filter(Boolean);
+    const parsed = lines.map((l) => {
+      try { return JSON.parse(l); } catch { return null; }
+    }).filter(Boolean);
+    return parsed.slice(-limit);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchJson(url, timeoutMs = 2500) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal, headers: { accept: "application/json" } });
+    if (!r.ok) return { ok: false, status: r.status, data: null };
+    return { ok: true, status: r.status, data: await r.json() };
+  } catch {
+    return { ok: false, status: 0, data: null };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function probe(port, pathname = "/v1/models") {
+  const res = await fetchJson(`http://127.0.0.1:${port}${pathname}`, 2000);
+  return res.ok || res.status === 200;
+}
+
+function send(res, code, body, type = "application/json") {
+  const payload = type.includes("json") ? JSON.stringify(body) : body;
+  res.writeHead(code, { "Content-Type": type, "Cache-Control": "no-store" });
+  res.end(payload);
+}
+
+// ---------- API routes ----------
 async function apiStatus() {
   const services = [
-    { id: "9router", name: "9Router", port: 20128 },
-    { id: "zesrouter", name: "ZESRouter", port: 5050 },
-    { id: "opencode-ui", name: "OpenCode UI", port: 4050 },
-    { id: "zen-relay", name: "Zen Relay", port: 7077 },
-    { id: "dash-ui", name: "Dash UI", port: 8090 },
+    { id: "9router", name: "9Router", port: 20128, path: "/v1/models" },
+    { id: "zesrouter", name: "ZESRouter", port: 5050, path: "/v1/models" },
+    { id: "zen-relay", name: "Zen Relay", port: 7077, path: "/health" },
+    { id: "lightpanda", name: "Lightpanda CDP", port: 9222, path: "/json/version" },
   ];
-  const out = [];
-  for (const s of services) out.push({ ...s, up: await probePort(s.port) });
-  return out;
+  const probed = await Promise.all(
+    services.map(async (s) => ({ ...s, up: await probe(s.port, s.path) }))
+  );
+  return { services: probed, generatedAt: new Date().toISOString() };
 }
 
-async function apiModels() {
-  const gateways = [
-    { id: "9router", url: "http://127.0.0.1:20128/v1/models" },
-    { id: "zesrouter", url: "http://127.0.0.1:5050/v1/models" },
-  ];
-  const out = {};
-  for (const g of gateways) {
-    const r = await fetchJson(g.url, 6000);
-    const ids = r.ok && r.data?.data?.map((m) => m.id).filter(Boolean);
-    out[g.id] = ids ? { count: ids.length, sample: ids.slice(0, 5) } : null;
-  }
-  return out;
+function apiTasks() {
+  const d = readJsonSafe(path.join(HERMES, "tasks.json"));
+  const tasks = d?.tasks ?? [];
+  return { tasks, count: tasks.length };
 }
 
-const LOG_FILES = {
-  "bitrouter": path.join(LOGDIR, "bitrouter/bitrouter.log"),
-  "nvidia-bridge": path.join(LOGDIR, "bitrouter/nvidia-bridge.log"),
-  "nvidia-bridge-top": path.join(LOGDIR, "nvidia-bridge.log"),
-  "zen-relay": path.join(LOGDIR, "zen-relay.log"),
-  "9router": path.join(LOGDIR, "9router.log"),
-};
+function apiActivity(limit = 100) {
+  const events = readJsonlTail(BUS, Number(limit) || 100);
+  return { events, count: events.length };
+}
 
-const server = http.createServer(async (req, res) => {
-  const u = new URL(req.url, "http://localhost");
-  const p = u.pathname;
+async function apiFleet() {
+  const roster = readJsonSafe(path.join(HERMES, "roster.json")) || { company: null, agents: [] };
+  const tasks = apiTasks().tasks;
+  const runningAgents = new Set(
+    tasks.filter((t) => t.status === "running" && t.assigned_to).map((t) => t.assigned_to)
+  );
+  const agents = (roster.agents || []).map((a) => ({
+    ...a,
+    liveRunning: runningAgents.has(a.id),
+    status: runningAgents.has(a.id) ? "running" : (a.status || "unknown"),
+  }));
+  return { company: roster.company || null, agents, taskCount: tasks.length };
+}
 
-  if (p === "/api/status") return json(res, { services: await apiStatus() });
+async function apiInfra() {
+  const [usage, models20128, models5050] = await Promise.all([
+    fetchJson("http://127.0.0.1:20128/api/usage/stats", 2500),
+    fetchJson("http://127.0.0.1:20128/v1/models", 2500),
+    fetchJson("http://127.0.0.1:5050/v1/models", 2500),
+  ]);
+  const count = (r) => (r.ok && Array.isArray(r.data?.data) ? r.data.data.length : null);
+  const sample = (r) =>
+    r.ok && Array.isArray(r.data?.data) ? r.data.data.slice(0, 5).map((m) => m.id || m.name).filter(Boolean) : [];
+  return {
+    usage: usage.ok ? usage.data : { unavailable: true },
+    models: {
+      "9router": { count: count(models20128), sample: sample(models20128) },
+      zesrouter: { count: count(models5050), sample: sample(models5050) },
+    },
+    generatedAt: new Date().toISOString(),
+  };
+}
 
-  if (p === "/api/usage") {
-    const r = await fetchJson("http://127.0.0.1:20128/api/usage/stats", 6000);
-    return json(res, r.ok ? r.data : { unavailable: true });
-  }
-
-  if (p === "/api/providers") {
-    const r = await fetchJson("http://127.0.0.1:20128/api/providers", 6000);
-    return json(res, r.ok ? r.data : { unavailable: true });
-  }
-
-  if (p === "/api/models") return json(res, await apiModels());
-
-  if (p === "/api/logs") {
-    const name = u.searchParams.get("name") || "";
-    const file = LOG_FILES[name];
-    if (!file) { res.writeHead(400); return res.end(JSON.stringify({ error: "unknown log" })); }
-    const lines = tailFile(file, 14);
-    return json(res, lines ? { lines } : { unavailable: true });
-  }
-
-  // static
-  let file = path.join(PUBLIC, p === "/" ? "index.html" : decodeURIComponent(p));
-  if (!file.startsWith(PUBLIC)) { res.writeHead(403); return res.end(); }
-  fs.readFile(file, (err, data) => {
-    if (err) { res.writeHead(404); return res.end("not found"); }
-    res.writeHead(200, { "content-type": MIME[path.extname(file)] || "application/octet-stream" });
+// ---------- static ----------
+function serveStatic(req, res) {
+  let urlPath = decodeURIComponent(req.url.split("?")[0]);
+  if (urlPath === "/") urlPath = "/index.html";
+  const fp = path.join(PUBLIC, path.normalize(urlPath).replace(/^(\.\.[/\\])+/, ""));
+  if (!fp.startsWith(PUBLIC)) return send(res, 403, { error: "forbidden" });
+  fs.readFile(fp, (err, data) => {
+    if (err) return send(res, 404, { error: "not found" });
+    const ext = path.extname(fp);
+    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
     res.end(data);
   });
-});
-
-function json(res, obj) {
-  res.writeHead(200, { "content-type": "application/json" });
-  res.end(JSON.stringify(obj));
 }
 
-server.listen(PORT, "127.0.0.1", () => console.log(`[zed-dash-v4] real-data dashboard on :${PORT}`));
+// ---------- router ----------
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  try {
+    if (url.pathname === "/api/status") return send(res, 200, await apiStatus());
+    if (url.pathname === "/api/tasks") return send(res, 200, apiTasks());
+    if (url.pathname === "/api/activity")
+      return send(res, 200, apiActivity(url.searchParams.get("limit")));
+    if (url.pathname === "/api/fleet") return send(res, 200, await apiFleet());
+    if (url.pathname === "/api/infra") return send(res, 200, await apiInfra());
+    if (url.pathname.startsWith("/api/")) return send(res, 404, { error: "unknown endpoint" });
+    return serveStatic(req, res);
+  } catch (e) {
+    return send(res, 500, { error: String(e) });
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`[zes-os-dashboard-v3] real-data dashboard on :${PORT}`);
+});
