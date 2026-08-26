@@ -1,0 +1,5 @@
+**Assumptions:** The five-word limit applies to the advantage statement itself; "loose coupling" counts as a valid single advantage.
+
+**Answer:** Loose coupling enables independent scaling.
+
+**Verification:** Word count: Loose(1) coupling(2) enables(3) independent(4) scaling(5) = exactly five words. It states one advantage (loosely coupled components scale independently), which is accurate for event-driven orchestration. ✓

@@ -1,0 +1,1 @@
+Failed to authenticate. API Error: 401 [anthropic/claude-sonnet-5] [401]: {"type":"error","error":{"type":"authentication_error","message":"API key is invalid."},"request_id":null} (reset after 1m 57s)

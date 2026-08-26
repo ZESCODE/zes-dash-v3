@@ -1,0 +1,45 @@
+[gw-proxy] :4400  primary=zesrouter:5050  fallback=9router:20128
+node:_http_server:411
+    throw new ERR_HTTP_HEADERS_SENT('write');
+    ^
+
+Error [ERR_HTTP_HEADERS_SENT]: Cannot write headers after they are sent to the client
+    at ServerResponse.writeHead (node:_http_server:411:11)
+    at ClientRequest.<anonymous> (file:///data/data/com.termux/files/home/zes-os/gw-proxy.mjs:48:13)
+    at Object.onceWrapper (node:events:631:12)
+    at ClientRequest.emit (node:events:509:20)
+    at HTTPParser.parserOnIncomingClient [as onIncoming] (node:_http_client:812:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+    at Socket.socketOnData (node:_http_client:647:22)
+    at Socket.emit (node:events:509:20)
+    at addChunk (node:internal/streams/readable:568:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:519:3) {
+  code: 'ERR_HTTP_HEADERS_SENT'
+}
+
+Node.js v26.4.0
+[gw-proxy] :4400  primary=zesrouter:5050  fallback=9router:20128
+2026-08-26T11:00:24.135Z POST /v1/messages [9router(fallback)] -> 200
+2026-08-26T11:00:27.792Z POST /v1/responses [9router(fallback)] -> 404
+[gw-proxy] :4400  primary=zesrouter:5050  fallback=9router:20128
+2026-08-26T11:08:33.589Z GET /v1/models [zesrouter] -> 200 tried=[-:200]
+2026-08-26T11:08:39.066Z POST /v1/messages [9router(fb)] -> 503 tried=[anthropic/claude-sonnet-5:503,pollinations/claude-sonnet-5:503]
+2026-08-26T11:08:42.576Z POST /v1/responses [zesrouter] -> 200 tried=[anthropic/claude-sonnet-5:200]
+2026-08-26T11:08:47.487Z POST /v1/chat/completions [zesrouter] -> 200 tried=[anthropic/claude-sonnet-5:503,pollinations/claude-sonnet-5:200]
+2026-08-26T11:09:49.533Z HEAD /v1/api/hello [9router(fb)] -> 404 tried=[-:404]
+2026-08-26T11:10:09.545Z POST /v1/v1/messages?beta=true [9router(fb)] -> 400 tried=[anthropic/claude-sonnet-5:404,pollinations/claude-sonnet-5:404]
+[gw-proxy] :4400  primary=zesrouter:5050  fallback=9router:20128
+2026-08-26T11:19:22.774Z HEAD /v1/api/hello -> 404 tried=[-:404]
+2026-08-26T11:19:30.338Z POST /v1/v1/messages?beta=true -> 400 tried=[anthropic/claude-sonnet-5:404,pollinations/claude-sonnet-5:404]
+2026-08-26T11:20:03.261Z GET /v1/models -> 200 tried=[-:200]
+[gw-proxy] :4400  primary=zesrouter:5050  fallback=9router:20128
+2026-08-26T11:22:24.921Z HEAD /api/hello -> 404 tried=[-:404]
+2026-08-26T11:22:28.636Z POST /v1/messages?beta=true -> 200 tried=[anthropic/claude-sonnet-5:200]
+2026-08-26T11:24:10.426Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:24:17.700Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:24:21.029Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:24:27.050Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:24:38.714Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:24:50.744Z POST /v1/responses -> 404 tried=[anthropic/claude-sonnet-5:400,pollinations/claude-sonnet-5:400]
+2026-08-26T11:25:36.358Z POST /v1/responses -> 200 tried=[anthropic/claude-sonnet-5:200]
+2026-08-26T11:29:29.061Z GET /v1/models -> 200 tried=[-:200]

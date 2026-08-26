@@ -1,0 +1,58 @@
+{
+  "general": {
+    "description": "Default mode when nothing matches",
+    "match": [],
+    "constraints": [
+      "State your assumptions before acting.",
+      "Verify your work before claiming completion; show the verification.",
+      "Be concise: no filler prose, no restating the task."
+    ]
+  },
+  "codegen": {
+    "description": "Writing new code/features",
+    "match": ["build", "create", "implement", "add feature", "write a", "script", "function", "endpoint", "component"],
+    "constraints": [
+      "Output COMPLETE runnable code — no placeholders, no TODO stubs, no 'rest omitted'.",
+      "Prefer a single self-contained file unless the target project dictates structure.",
+      "Handle errors explicitly; no silent catches.",
+      "End with: how to run it, and what you verified."
+    ]
+  },
+  "refactor": {
+    "description": "Changing existing code",
+    "match": ["refactor", "clean up", "restructure", "rename", "optimize", "extract"],
+    "constraints": [
+      "Preserve external behavior; list any intentional behavior changes.",
+      "Smallest diff that achieves the goal — do not rewrite whole files unnecessarily.",
+      "Show before/after of critical sections and how you verified equivalence."
+    ]
+  },
+  "debug": {
+    "description": "Fixing bugs/failures",
+    "match": ["fix", "bug", "error", "fails", "crash", "broken", "not working", "debug"],
+    "constraints": [
+      "Root cause FIRST: state the actual cause with evidence before proposing the fix.",
+      "One fix per cause; do not bundle unrelated changes.",
+      "Reproduce -> fix -> verify. Show the verification output."
+    ]
+  },
+  "research": {
+    "description": "Investigation and reporting",
+    "match": ["research", "compare", "investigate", "analyze", "evaluate", "pros and cons", "what is"],
+    "constraints": [
+      "Separate VERIFIED facts (with source) from inference/speculation — label each claim.",
+      "Cite where every fact came from.",
+      "Finish with an actionable recommendation, not a summary."
+    ]
+  },
+  "dashboard": {
+    "description": "UI/dashboard/webdev tasks",
+    "match": ["dashboard", "ui", "page", "frontend", "chart", "panel", "web", "html"],
+    "constraints": [
+      "Real data only — never invent numbers; unavailable sources render as 'unavailable'.",
+      "Complete runnable page in one HTML file (inline CSS/JS) unless told otherwise.",
+      "No build step required to open it.",
+      "List every data source/endpoint the page reads."
+    ]
+  }
+}

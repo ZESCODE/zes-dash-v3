@@ -1,0 +1,261 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* Register the frost palette as Tailwind theme colors so utilities like
+   text-frost-blue, bg-frost-blue/15, border-frost-green/30 … all generate. */
+@theme {
+  --color-frost-blue: #409cff;
+  --color-frost-green: #10d181;
+  --color-frost-orange: #fb923c;
+  --color-frost-red: #f85564;
+}
+
+/* ============================================================
+   ZES · Frost Design System  —  Dark (#000000) Orchestration UI
+   Frost palette:  blue = main/default · green = running
+                   orange = warning   · red = error
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  --frost-blue: 64, 156, 255;
+  --frost-green: 16, 209, 129;
+  --frost-orange: 251, 146, 60;
+  --frost-red: 248, 85, 100;
+
+  --bg: #000000;
+  --fg: #eaf1ff;
+  --muted: rgba(234, 241, 255, 0.55);
+  --line: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #000000;
+  color: var(--fg);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Layered ambient glow behind everything */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 700px at 12% -8%, rgba(var(--frost-blue) / 0.18), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(120, 90, 255, 0.12), transparent 55%),
+    radial-gradient(800px 700px at 85% 110%, rgba(var(--frost-green) / 0.08), transparent 60%),
+    radial-gradient(700px 600px at -5% 95%, rgba(var(--frost-orange) / 0.07), transparent 60%);
+}
+
+.font-display {
+  font-family: "Inter", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+.font-mono {
+  font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* ============================================================
+   Component classes — kept inside @layer components so that
+   Tailwind utilities (radius, padding, …) can override them.
+   ============================================================ */
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid var(--line);
+  }
+
+  .glass-strong {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03));
+    backdrop-filter: blur(26px) saturate(160%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014));
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px -30px rgba(0, 0, 0, 0.9);
+  }
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    pointer-events: none;
+  }
+
+  /* ---- Frost color variants ---- */
+  .frost-blue {
+    border-color: rgba(var(--frost-blue) / 0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(var(--frost-blue) / 0.18), 0 0 0 1px rgba(var(--frost-blue) / 0.08), 0 22px 60px -28px rgba(var(--frost-blue) / 0.55);
+    background-image: linear-gradient(180deg, rgba(var(--frost-blue) / 0.12), rgba(var(--frost-blue) / 0.025));
+  }
+  .frost-green {
+    border-color: rgba(var(--frost-green) / 0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(var(--frost-green) / 0.2), 0 0 0 1px rgba(var(--frost-green) / 0.08), 0 22px 60px -28px rgba(var(--frost-green) / 0.55);
+    background-image: linear-gradient(180deg, rgba(var(--frost-green) / 0.12), rgba(var(--frost-green) / 0.025));
+  }
+  .frost-orange {
+    border-color: rgba(var(--frost-orange) / 0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(var(--frost-orange) / 0.2), 0 0 0 1px rgba(var(--frost-orange) / 0.08), 0 22px 60px -28px rgba(var(--frost-orange) / 0.5);
+    background-image: linear-gradient(180deg, rgba(var(--frost-orange) / 0.12), rgba(var(--frost-orange) / 0.025));
+  }
+  .frost-red {
+    border-color: rgba(var(--frost-red) / 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(var(--frost-red) / 0.22), 0 0 0 1px rgba(var(--frost-red) / 0.1), 0 22px 60px -26px rgba(var(--frost-red) / 0.55);
+    background-image: linear-gradient(180deg, rgba(var(--frost-red) / 0.13), rgba(var(--frost-red) / 0.03));
+  }
+
+  .text-frost-blue { color: rgb(var(--frost-blue)); }
+  .text-frost-green { color: rgb(var(--frost-green)); }
+  .text-frost-orange { color: rgb(var(--frost-orange)); }
+  .text-frost-red { color: rgb(var(--frost-red)); }
+
+  .bg-frost-blue { background-color: rgba(var(--frost-blue) / 0.12); }
+  .bg-frost-green { background-color: rgba(var(--frost-green) / 0.12); }
+  .bg-frost-orange { background-color: rgba(var(--frost-orange) / 0.12); }
+  .bg-frost-red { background-color: rgba(var(--frost-red) / 0.12); }
+
+  /* ---- Status bullets ---- */
+  .bullet {
+    position: relative;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    flex: none;
+  }
+  .bullet-blue { background: rgb(var(--frost-blue)); box-shadow: 0 0 10px rgba(var(--frost-blue) / 0.9); }
+  .bullet-green { background: rgb(var(--frost-green)); box-shadow: 0 0 10px rgba(var(--frost-green) / 0.9); }
+  .bullet-orange { background: rgb(var(--frost-orange)); box-shadow: 0 0 10px rgba(var(--frost-orange) / 0.9); }
+  .bullet-red { background: rgb(var(--frost-red)); box-shadow: 0 0 10px rgba(var(--frost-red) / 0.9); }
+  .bullet-gray { background: rgba(255, 255, 255, 0.35); }
+  .bullet-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    opacity: 0.6;
+    animation: ring 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    animation: shimmer 2.2s infinite;
+  }
+}
+
+/* ============================================================
+   Animations + scrollbar (unlayered utilities)
+   ============================================================ */
+@keyframes flowDash {
+  to { stroke-dashoffset: -1000; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes spinSlow {
+  to { transform: rotate(360deg); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes ring {
+  0% { transform: scale(0.7); opacity: 0.7; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+.animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in { animation: fadeIn 0.4s ease both; }
+.animate-spin-slow { animation: spinSlow 14s linear infinite; }
+.animate-glow { animation: glowPulse 2.6s ease-in-out infinite; }
+
+/* Scrollbar */
+.scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.scroll-area::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroll-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 9999px; }
+.scroll-area::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+
+.no-bar { scrollbar-width: none; }
+.no-bar::-webkit-scrollbar { display: none; }
+
+/* range input frost styling */
+input[type="range"].frost-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+input[type="range"].frost-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: rgb(var(--frost-blue));
+  box-shadow: 0 0 12px rgba(var(--frost-blue) / 0.8);
+  cursor: pointer;
+  border: 2px solid #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

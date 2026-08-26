@@ -1,0 +1,9 @@
+$time=1787737361877 $scope=app $level=warn $msg="No certificates loaded"
+$time=1787737361880 $scope=app $level=note $msg="server running" address=127.0.0.1:9222
+$time=1787737367237 $scope=telemetry $level=warn $msg="flush" err=PeerFailedVerification size=0
+$time=1787737367238 $scope=telemetry $level=warn $msg="postEvents" err=PeerFailedVerification events=1 dropped=0
+$time=1787737497836 $scope=frame $level=error $msg="navigate failed" err=PeerFailedVerification type=root url=https://example.com/
+$time=1787737502952 $scope=telemetry $level=warn $msg="flush" err=PeerFailedVerification size=0
+$time=1787737502952 $scope=telemetry $level=warn $msg="postEvents" err=PeerFailedVerification events=1 dropped=1
+$time=1787737767503 $scope=app $level=note $msg="server running" address=127.0.0.1:9222
+$time=1787743773892 $scope=app $level=note $msg="server running" address=127.0.0.1:9222

@@ -1,0 +1,5 @@
+**Assumptions:** "Exactly five words" means the answer itself is a five-word phrase (hyphenated terms count as one word); no article needed if it breaks the count.
+
+**Answer:** Loose coupling enables independent scaling.
+
+**Verification:** Loose (1) · coupling (2) · enables (3) · independent (4) · scaling (5) — five words. ✓

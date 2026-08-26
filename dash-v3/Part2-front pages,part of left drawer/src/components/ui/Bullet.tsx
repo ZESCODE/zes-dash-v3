@@ -1,0 +1,19 @@
+import { cn } from "@/utils/cn";
+import type { FrostColor } from "@/lib/types";
+import { frostBullet, frostText } from "@/lib/theme";
+
+export function Bullet({
+  color,
+  pulse = false,
+  className,
+}: {
+  color: FrostColor;
+  pulse?: boolean;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn("bullet", frostBullet(color), pulse && "bullet-pulse", pulse && color !== "gray" && frostText(color), className)}
+    />
+  );
+}
