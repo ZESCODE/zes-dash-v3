@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZES Dashboard — Fleet</title>
+<link rel="stylesheet" href="/css/dark-bg.css" />
+<link rel="stylesheet" href="/css/styles.css" />
+<link rel="stylesheet" href="/css/frost-overrides.css" />
+<style>
+  body { margin:0; font-family: ui-sans-serif, system-ui, sans-serif; color:#e5e7eb; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; font-weight:700; letter-spacing:.02em; margin:0 0 4px; }
+  .sub { font-size:12px; color:#9ca3af; margin-bottom:20px; }
+  .grid { display:grid; gap:14px; }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { border-radius:12px; padding:18px; }
+  .lbl { font-size:10px; text-transform:uppercase; letter-spacing:.15em; color:rgba(229,231,235,.7); font-weight:600; }
+  .val { font-size:26px; font-weight:800; margin-top:2px; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px; }
+  .row:last-child { border-bottom:none; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:8px; }
+  .dot.up { background:#34d399; box-shadow:0 0 8px #34d39988; }
+  .dot.down { background:#f87171; box-shadow:0 0 8px #f8717188; }
+  .badge { font-size:10px; font-weight:600; padding:2px 8px; border-radius:999px; display:inline-block; }
+  .badge.active { background:rgba(52,211,153,.15); color:#6ee7b7; }
+  .badge.unknown { background:rgba(251,146,60,.15); color:#fdba74; }
+  .badge.unavailable { background:rgba(248,113,113,.15); color:#fca5a5; }
+  pre.log { font-family:ui-monospace,monospace; font-size:11px; line-height:1.5; white-space:pre-wrap; word-break:break-all;
+            max-height:220px; overflow:auto; margin:0; color:#cbd5e1; background:rgba(0,0,0,.25); border-radius:8px; padding:10px; }
+  .muted { color:#9ca3af; font-size:12px; font-style:italic; }
+  .sec { margin-top:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ZES Dashboard <span style="opacity:.5;font-weight:400">· fleet</span></h1>
+  <div class="sub">live data from local services · refreshed every 10s · nothing mocked</div>
+
+  <div class="grid g4" id="stats"></div>
+
+  <div class="grid g2 sec">
+    <div class="card glass glass-frost-blue">
+      <div class="lbl">Fleet status</div>
+      <div id="fleet" class="muted">loading…</div>
+    </div>
+    <div class="card glass glass-frost-green">
+      <div class="lbl">Provider connections <span style="opacity:.6">(9Router)</span></div>
+      <div id="providers" class="muted">loading…</div>
+    </div>
+  </div>
+
+  <div class="card glass sec" id="modelsCard" style="--tw-shadow:none;background:linear-gradient(135deg,rgba(59,130,246,.18),rgba(30,58,138,.12));border:1px solid rgba(96,165,250,.35)">
+    <div class="lbl">Models <span style="opacity:.6">(live /v1/models)</span></div>
+    <div id="models" class="muted">loading…</div>
+  </div>
+
+  <div class="grid g2 sec">
+    <div class="card glass">
+      <div class="lbl mb-2">bitrouter log <span style="opacity:.6">(tail)</span></div>
+      <pre class="log" id="log-bitrouter">loading…</pre>
+    </div>
+    <div class="card glass">
+      <div class="lbl mb-2">zen-relay log <span style="opacity:.6">(tail)</span></div>
+      <pre class="log" id="log-zen-relay">loading…</pre>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
