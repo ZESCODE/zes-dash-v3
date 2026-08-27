@@ -15,15 +15,25 @@ THE 10 PAGES (routes & descriptions)
 
 # Page Route Description
 1 Overview / Main dashboard with top‑level stats (agents online, running pipelines, warnings, errors) – keep as in template
+
 2 Agents /agents Detailed list of all agents with status, tasks, latency – keep as in template
+
 3 Orchestration Flow /flow Visual representation of request paths between agents – keep as in template
+
 4 Event Stream /events Live feed of bus events (SSE or polling) 
+
 5 System Health /health Gateway metrics: cache, proxy pool, circuit breakers, uptime – keep as in template
+
 6 Memory /Memory pages that show shared memory with holographic 
+
 7 Fleet / Org /fleet Organization roster with live agent status (merge roster.json + tasks.json)
+
 8 Tasks Kanban /tasks Kanban board with columns: pending, running, completed, failed
+
 9 Activity /activity Real‑time event stream from bus (poll every ≤5s, no SSE) – similar to Event Stream but with different layout
+
 10 Infrastructure /infra Raw stats from :20128/api/usage/stats, :20128/v1/models, :5050/v1/models
+
 11 Settings /settings Configuration endpoints 
 ---
 
