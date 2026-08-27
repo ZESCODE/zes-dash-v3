@@ -34,15 +34,19 @@ THE 11 PAGES (routes & descriptions)
 
 10 Infrastructure /infra Raw stats from :20128/api/usage/stats, :20128/v1/models, :5050/v1/models
 
-11 Settings /settings Configuration endpoints 
+11 Settings /settings Configuration endpoints
+ 
 ---
 
-VISUAL DESIGN (from the templates – replicate exactly)
+VISUAL DESIGN
+
+must use frost color card to all card
+https://github.com/ZESCODE/frost-cards
 
 · Background: #0a0a0a with subtle radial gradient in top‑right.
 · Cards: bg-black/40), backdrop-blur-xl, border border- frost blue, rounded-2xl, shadow‑lg.
 · Accent: frost blue – for headers, badges, active links, progress bars.
-· Sidebar: width ~240px, dark , with 10 icons (one for each page). Use appropriate lucide-react icons:
+· Sidebar: width ~240px, dark , with 11 icons (one for each page). Use appropriate lucide-react icons:
   · Dashboard: LayoutDashboard
   · Agents: Users
   · Flow: GitBranch
@@ -173,14 +177,17 @@ PAGE‑BY‑PAGE REQUIREMENTS (NEW pages only – keep existing 6 as in template
   · Node Uptime: system uptime (from os.uptime()).
 · All numbers come from the three HTTP endpoints – if an endpoint fails, show –.
 
+✅ Memory (/memory)
+•holographic memory 
+•show shared memory and all 5 agent memory
+
 ---
 
-KEEP EXISTING 6 PAGES AS IN TEMPLATE
+KEEP EXISTING 6 PAGES IN TEMPLATE
 
-· Do not change the layout, content, or data presentation of Overview, Agents, Orchestration Flow, Event Stream, System Health, and Settings.
+· you can change the layout, content, or data presentation of Overview, Agents, Orchestration Flow, Event Stream, System Health, and Settings if needed.
 · Make sure their data also comes from the live sources (e.g., Overview uses aggregated stats from /api/overview, Agents from /api/agents, etc.).
-· The design and behaviour should match the screenshots you shared earlier.
-
+· 
 ---
 
 RUN COMMANDS
@@ -196,18 +203,17 @@ Open http://127.0.0.1:7070
 
 NON‑NEGOTIABLE RULES
 
-1. Zero mock data – every number must come from a live source.
+1. mock data – use mock for data you can't get or access..but write a note about it.
 2. Read‑only – the server never writes to ~/.hermes/ or ~/.zes/.
 3. Memory‑efficient – Node server RSS < 80MB, cold start < 2s.
-4. Design must match the templates – dark glass, purple accent, sidebar with icons.
-5. All 10 pages must be accessible from the sidebar.
+4. Design must match the templates – dark glass, frost card, sidebar with icons.
+5. All 11 pages must be accessible from the sidebar.
 
 ---
 
 DELIVERABLES
 
-Provide complete, runnable code for every file listed in the structure above. No TODOs, no placeholders – all pages functional with live data.
-
+Provide complete, runnable code for every file listed in the structure above. 
 ---
 
 Build it 
