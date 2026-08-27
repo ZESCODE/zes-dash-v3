@@ -72,7 +72,7 @@ TECH STACK
 
 ---
 
-LIVE DATA SOURCES (read‑only, no mocks)
+LIVE DATA SOURCES (read‑only)
 
 https://github.com/ZESCODE/zes-dash-v3/blob/main/live%20data.txt
 
