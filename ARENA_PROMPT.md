@@ -1,17 +1,17 @@
 
 
-MISSION: Build ZES OS Dashboard v3 – 10 Pages, Modern Design, Live Data
+MISSION: Build ZES OS Dashboard v3 – 11 Pages, Modern Design, Live Data
 
 You are to create a production dashboard for an AI‑agent orchestration system running on Termux (Android).
 It must:
 
 1. use frost color to all card
-2. Include ALL 10 pages listed below.
+2. Include ALL 11 pages listed below.
 3. Use live data only – every number must come from real sources (files or HTTP APIs). if possible 
 
 ---
 
-THE 10 PAGES (routes & descriptions)
+THE 11 PAGES (routes & descriptions)
 
 # Page Route Description
 1 Overview / Main dashboard with top‑level stats (agents online, running pipelines, warnings, errors) – keep as in template
@@ -70,6 +70,8 @@ TECH STACK
 
 LIVE DATA SOURCES (read‑only, no mocks)
 
+https://github.com/ZESCODE/zes-dash-v3/blob/main/live%20data.txt
+
 Source Path / URL Used by
 Roster ~/.hermes/roster.json Fleet, Agents, Overview
 Tasks ~/.hermes/tasks.json Tasks Kanban, Fleet, Overview
@@ -113,20 +115,20 @@ FILE STRUCTURE (create these)
 │   ├── index.html
 │   ├── src/
 │   │   ├── main.tsx
-│   │   ├── App.tsx         # Routes for all 10 pages
+│   │   ├── App.tsx         # Routes for all 11 pages
 │   │   ├── routes/
 │   │   │   ├── Overview.tsx
 │   │   │   ├── Agents.tsx
 │   │   │   ├── Flow.tsx
 │   │   │   ├── EventStream.tsx
 │   │   │   ├── SystemHealth.tsx
-│   │   │   ├── Fleet.tsx
+│   │   │   ├── Fleet.tsx                    |   |   |    |-- Memory 
 │   │   │   ├── Tasks.tsx           
 │   │   │   ├── Activity.tsx
 │   │   │   ├── Infrastructure 
 │   │   │   └── Settings.tsx.  
 │   │   ├── components/
-│   │   │   ├── Sidebar.tsx     # includes all 10 nav items
+│   │   │   ├── Sidebar.tsx     # includes all 11 nav items
 │   │   │   ├── StatsCard.tsx
 │   │   │   ├── ModuleCard.tsx
 │   │   │   ├── TaskCard.tsx
