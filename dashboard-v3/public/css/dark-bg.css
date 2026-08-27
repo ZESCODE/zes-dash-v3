@@ -1,7 +1,0 @@
-/* Dark background enforcement — loaded separately from Tailwind to avoid JIT stripping */
-html.dark body,
-.dark body,
-html.dark,
-.dark {
-  background-color: #000000 !important;
-}
