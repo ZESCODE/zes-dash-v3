@@ -7,7 +7,7 @@ It must:
 
 1. use frost color to all card
 2. Include ALL 11 pages listed below.
-3. Use live data only – every number must come from real sources (files or HTTP APIs). if possible 
+3. Use live data – every number data come from real sources (files or HTTP APIs). if possible 
 
 ---
 
@@ -44,7 +44,7 @@ must use frost color card to all card
 https://github.com/ZESCODE/frost-cards
 
 · Background: #0a0a0a with subtle radial gradient in top‑right.
-· Cards: bg-black/40), backdrop-blur-xl, border border- frost blue, rounded-2xl, shadow‑lg.
+· Cards: bg-black/40), backdrop-blur-xl, border border- frost card, rounded-2xl, shadow‑lg.
 · Accent: frost blue – for headers, badges, active links, progress bars.
 · Sidebar: width ~240px, dark , with 11 icons (one for each page). Use appropriate lucide-react icons:
   · Dashboard: LayoutDashboard
