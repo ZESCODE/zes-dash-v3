@@ -53,7 +53,7 @@ export function frostBg(c: FrostColor): string {
 }
 
 export function frostBorder(c: FrostColor): string {
-  if (c === "gray") return "border-white/10";
+  if (c === "gray") return "border-frost-blue/10";
   return `border-frost-${c}/40`;
 }
 

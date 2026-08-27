@@ -21,12 +21,12 @@ export function BarChart({
       {label && (
         <p className="mb-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-white/40">{label}</p>
       )}
-      <div className="relative w-full rounded-lg border border-white/8 bg-[#0f172a]/40 p-3" style={{ height }}>
+      <div className="relative w-full rounded-lg border border-frost-blue/8 bg-[#0f172a]/40 p-3" style={{ height }}>
         {/* grid */}
         {Array.from({ length: gridLines }, (_, i) => (
           <div
             key={i}
-            className="pointer-events-none absolute inset-x-3 border-t border-dashed border-white/6"
+            className="pointer-events-none absolute inset-x-3 border-t border-dashed border-frost-blue/6"
             style={{ top: `${12 + ((height - 36) / gridLines) * i}px` }}
           />
         ))}
@@ -43,7 +43,7 @@ export function BarChart({
                   opacity: 0.85,
                 }}
               />
-              <div className="pointer-events-none absolute -top-1 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-white/15 bg-black/90 px-1.5 py-0.5 font-mono text-[9px] text-white group-hover:block">
+              <div className="pointer-events-none absolute -top-1 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-frost-blue/15 bg-black/90 px-1.5 py-0.5 font-mono text-[9px] text-white group-hover:block">
                 {d.label}: {d.value}
               </div>
             </div>

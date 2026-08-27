@@ -54,7 +54,7 @@ export default function Tasks() {
                   <TaskCard key={t.id} task={t} />
                 ))}
                 {list.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-white/8 py-6 text-center font-mono text-[10px] text-white/25">
+                  <div className="rounded-xl border border-dashed border-frost-blue/8 py-6 text-center font-mono text-[10px] text-white/25">
                     empty
                   </div>
                 )}

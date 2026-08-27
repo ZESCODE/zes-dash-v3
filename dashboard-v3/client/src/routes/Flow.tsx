@@ -37,7 +37,7 @@ export default function Flow() {
       <PageHeader icon={GitBranch} title="Orchestration Flow" subtitle="live request paths between agents" live={!data?.error} />
 
       <GlassCard className="p-2 sm:p-3 animate-fade-up">
-        <div className="relative h-96 w-full overflow-hidden rounded-xl border border-white/8 bg-black/40 sm:h-[28rem]">
+        <div className="relative h-96 w-full overflow-hidden rounded-xl border border-frost-blue/8 bg-black/40 sm:h-[28rem]">
           {nodes.length === 0 && (
             <div className="flex h-full items-center justify-center">
               <Empty msg="roster.json unreachable — no flow to draw" />

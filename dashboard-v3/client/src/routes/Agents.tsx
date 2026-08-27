@@ -31,7 +31,7 @@ export default function Agents() {
         <GlassCard className="overflow-x-auto p-0 animate-fade-up">
           <table className="w-full min-w-[560px] text-left font-mono text-[11px]">
             <thead>
-              <tr className="border-b border-white/8 text-[9px] uppercase tracking-[0.12em] text-white/40">
+              <tr className="border-b border-frost-blue/8 text-[9px] uppercase tracking-[0.12em] text-white/40">
                 <th className="px-4 py-3">Agent</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Pending</th>
@@ -46,7 +46,7 @@ export default function Agents() {
               {agents.map((a) => {
                 const c = statusColor(a.status);
                 return (
-                  <tr key={a.id} className="cursor-pointer border-b border-white/5 transition-colors hover:bg-white/[0.03]" onClick={() => setSelected(a)}>
+                  <tr key={a.id} className="cursor-pointer border-b border-frost-blue/5 transition-colors hover:bg-white/[0.03]" onClick={() => setSelected(a)}>
                     <td className="px-4 py-2.5 font-semibold text-white/85">{a.name ?? a.id}</td>
                     <td className={cn("px-4 py-2.5", frostText(c))}>
                       <span className="flex items-center gap-1.5">
@@ -109,7 +109,7 @@ function AgentModal({ agent, onClose }: { agent: FleetAgent; onClose: () => void
         </div>
 
         {agent.lastTask && (
-          <div className="mt-3 rounded-xl border border-white/8 bg-black/30 p-3">
+          <div className="mt-3 rounded-xl border border-frost-blue/8 bg-black/30 p-3">
             <p className="font-mono text-[9px] uppercase tracking-wide text-white/35">Last task · {timeAgo(agent.lastTask.created_at)}</p>
             <p className="mt-1 text-[12px] font-medium text-white/85">{agent.lastTask.title}</p>
             {agent.lastTask.result_tail && (
@@ -124,7 +124,7 @@ function AgentModal({ agent, onClose }: { agent: FleetAgent; onClose: () => void
 
 function KV({ k, v }: { k: string; v: string }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 px-2.5 py-2">
+    <div className="rounded-lg border border-frost-blue/5 bg-black/20 px-2.5 py-2">
       <div className="text-[8px] uppercase tracking-wide text-white/35">{k}</div>
       <div className="mt-0.5 truncate text-white/80">{v}</div>
     </div>

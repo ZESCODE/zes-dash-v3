@@ -90,7 +90,7 @@ export default function Settings() {
 
 function KV({ k, v, icon: Icon }: { k: string; v: string; icon?: typeof Cpu }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 px-2.5 py-2">
+    <div className="rounded-lg border border-frost-blue/5 bg-black/20 px-2.5 py-2">
       <div className="flex items-center gap-1 text-[8px] uppercase tracking-wide text-white/35">
         {Icon && <Icon className="size-2.5" />} {k}
       </div>

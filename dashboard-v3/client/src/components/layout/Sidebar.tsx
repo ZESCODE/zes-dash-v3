@@ -72,7 +72,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarFooter() {
   return (
-    <div className="border-t border-white/8 p-4">
+    <div className="border-t border-frost-blue/8 p-4">
       <div className="glass-card frost-blue rounded-xl p-3">
         <p className="text-[11px] font-medium text-white/70">OmniRoute Gateway</p>
         <p className="mono mt-1 text-[10px] text-frost-green/90">127.0.0.1:20128/v1</p>
@@ -98,11 +98,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-[300px] flex-col border-r border-white/10 bg-black/90 backdrop-blur-2xl transition-transform duration-300 ease-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-[300px] flex-col border-r border-frost-blue/10 bg-black/90 backdrop-blur-2xl transition-transform duration-300 ease-out md:hidden",
           open ? "translate-x-0 animate-slide-in-left" : "pointer-events-none -translate-x-full",
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-white/8 px-4">
+        <div className="flex h-14 items-center justify-between border-b border-frost-blue/8 px-4">
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-frost-blue/15 ring-1 ring-frost-blue/30">
               <Hexagon className="size-3.5 text-frost-blue" />
@@ -123,7 +123,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       </aside>
 
       {/* desktop persistent sidebar (~240px) */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/10 bg-black/60 pt-16 backdrop-blur-2xl md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-frost-blue/10 bg-black/60 pt-16 backdrop-blur-2xl md:flex">
         <NavList />
         <SidebarFooter />
       </aside>

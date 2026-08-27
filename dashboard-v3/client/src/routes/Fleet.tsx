@@ -53,7 +53,7 @@ export default function Fleet() {
                       <span className={cn("flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-wide", frostBg(c), frostText(c))}>
                         <Bullet color={c} pulse={a.status === "running"} /> {a.status}
                       </span>
-                      {a.kind && <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[9px] text-white/45">{a.kind}</span>}
+                      {a.kind && <span className="rounded-full border border-frost-blue/10 bg-white/5 px-2 py-0.5 font-mono text-[9px] text-white/45">{a.kind}</span>}
                     </div>
                     <p className="mt-0.5 line-clamp-1 text-[11px] text-white/50">
                       {a.description ?? a.role ?? "—"}
@@ -90,7 +90,7 @@ export default function Fleet() {
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 px-2.5 py-1.5">
+    <div className="rounded-lg border border-frost-blue/5 bg-black/20 px-2.5 py-1.5">
       <div className={cn("text-sm font-semibold text-white/85", tone)}>{value}</div>
       <div className="text-[8px] uppercase tracking-wide text-white/35">{label}</div>
     </div>

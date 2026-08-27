@@ -7,7 +7,7 @@ export function EventItem({ event, compact = false }: { event: BusEvent; compact
   const c = eventColor(event.type);
   const payload = event.payload ? JSON.stringify(event.payload) : "";
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-white/5 bg-black/20 px-2.5 py-2">
+    <div className="flex items-start gap-2.5 rounded-lg border border-frost-blue/5 bg-black/20 px-2.5 py-2">
       <Bullet color={c} className="mt-1.5" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">

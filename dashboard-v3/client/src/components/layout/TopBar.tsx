@@ -17,13 +17,13 @@ export function TopBar({
 }) {
   const allGood = errors === 0 && online === total;
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-frost-blue/10 bg-black/50 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-3 py-2.5 sm:px-5">
         {/* hamburger — mobile only, sidebar is persistent on desktop */}
         <button
           onClick={onLeft}
           title="Navigation"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:border-frost-blue/40 hover:bg-frost-blue/10 hover:text-frost-blue active:scale-95 md:hidden"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-frost-blue/10 bg-white/5 text-white/70 transition hover:border-frost-blue/40 hover:bg-frost-blue/10 hover:text-frost-blue active:scale-95 md:hidden"
         >
           <Menu className="size-5" />
         </button>
@@ -72,7 +72,7 @@ export function TopBar({
         <button
           onClick={onRight}
           title="Live feed & metrics"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:border-frost-blue/40 hover:bg-frost-blue/10 hover:text-frost-blue active:scale-95"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-frost-blue/10 bg-white/5 text-white/70 transition hover:border-frost-blue/40 hover:bg-frost-blue/10 hover:text-frost-blue active:scale-95"
         >
           <PanelRight className="size-5" />
         </button>

@@ -57,7 +57,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="relative z-10 border-t border-white/8 py-4 text-center text-[11px] text-white/30 md:ml-60">
+      <footer className="relative z-10 border-t border-frost-blue/8 py-4 text-center text-[11px] text-white/30 md:ml-60">
         ZES OS Dashboard v3 · Frost design system · Termux node
       </footer>
     </div>

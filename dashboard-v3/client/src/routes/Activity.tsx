@@ -95,7 +95,7 @@ export default function Activity() {
           {groups.map(([day, list]) => (
             <div key={day} className="mb-4 last:mb-0">
               <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-frost-blue/80">{day}</p>
-              <div className="relative ml-1.5 border-l border-white/10 pl-5">
+              <div className="relative ml-1.5 border-l border-frost-blue/10 pl-5">
                 {list.map((e) => {
                   const c = eventColor(e.type);
                   const payload = e.payload ? JSON.stringify(e.payload) : "";

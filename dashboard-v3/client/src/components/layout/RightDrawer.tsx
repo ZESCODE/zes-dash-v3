@@ -32,11 +32,11 @@ export function RightDrawer({ open, onClose }: { open: boolean; onClose: () => v
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-[88%] max-w-[360px] flex-col border-l border-white/10 bg-black/90 backdrop-blur-2xl transition-transform duration-300 ease-out",
+          "fixed inset-y-0 right-0 z-50 flex w-[88%] max-w-[360px] flex-col border-l border-frost-blue/10 bg-black/90 backdrop-blur-2xl transition-transform duration-300 ease-out",
           open ? "translate-x-0 animate-slide-in-right" : "pointer-events-none translate-x-full",
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-white/8 px-4">
+        <div className="flex h-14 items-center justify-between border-b border-frost-blue/8 px-4">
           <div className="flex items-center gap-2">
             <Radio className="size-4 text-frost-green" />
             <span className="text-[13px] font-semibold text-white">Live System Panel</span>

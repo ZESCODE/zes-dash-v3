@@ -71,7 +71,7 @@ export default function EventStream() {
                   "rounded-full border px-2.5 py-1 font-mono text-[10px] transition",
                   filter === t
                     ? "border-frost-blue/40 bg-frost-blue/15 text-frost-blue"
-                    : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10",
+                    : "border-frost-blue/10 bg-white/5 text-white/50 hover:bg-white/10",
                 )}
               >
                 {t}
@@ -93,7 +93,7 @@ export default function EventStream() {
         <SectionTitle title="Event Types" />
         <div className="flex flex-wrap gap-2">
           {Array.from(new Set(live.map((e) => e.type))).map((t) => (
-            <span key={t} className={cn("rounded-full border border-white/10 bg-black/30 px-2.5 py-1 font-mono text-[10px]", frostText(eventColor(t)))}>
+            <span key={t} className={cn("rounded-full border border-frost-blue/10 bg-black/30 px-2.5 py-1 font-mono text-[10px]", frostText(eventColor(t)))}>
               {t}
             </span>
           ))}

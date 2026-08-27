@@ -92,7 +92,7 @@ function HoloCard({ bank, big = false }: { bank: MemoryBank; big?: boolean }) {
           <Stat label="updated" value={bank.updated ? timeAgo(bank.updated) : "–"} icon={Clock} />
         </div>
 
-        <p className="mono mt-3 line-clamp-3 rounded-lg border border-white/8 bg-black/40 px-2.5 py-2 text-[9.5px] leading-relaxed text-white/45">
+        <p className="mono mt-3 line-clamp-3 rounded-lg border border-frost-blue/8 bg-black/40 px-2.5 py-2 text-[9.5px] leading-relaxed text-white/45">
           {preview(bank.data)}
         </p>
       </div>
@@ -102,7 +102,7 @@ function HoloCard({ bank, big = false }: { bank: MemoryBank; big?: boolean }) {
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string; icon?: typeof Clock }) {
   return (
-    <div className="rounded-lg border border-white/8 bg-black/30 px-2 py-1.5">
+    <div className="rounded-lg border border-frost-blue/8 bg-black/30 px-2 py-1.5">
       <div className="flex items-center gap-1 text-[8px] uppercase tracking-wide text-white/35">
         {Icon && <Icon className="size-2.5" />} {label}
       </div>

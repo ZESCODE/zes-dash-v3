@@ -180,7 +180,7 @@ function ModelPanel({
       <div className="scroll-area mt-2.5 max-h-44 space-y-1 overflow-y-auto pr-1">
         {ok &&
           list!.data!.map((m) => (
-            <div key={m.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/25 px-2.5 py-1.5 font-mono text-[10px]">
+            <div key={m.id} className="flex items-center justify-between rounded-lg border border-frost-blue/5 bg-black/25 px-2.5 py-1.5 font-mono text-[10px]">
               <span className="truncate text-white/75">{m.id}</span>
               {m.owned_by && <span className="ml-2 shrink-0 text-white/30">{m.owned_by}</span>}
             </div>
