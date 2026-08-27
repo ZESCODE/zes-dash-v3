@@ -19,12 +19,12 @@
 :root {
   color-scheme: dark;
 
-  --frost-blue: 64, 156, 255;
-  --frost-green: 16, 209, 129;
-  --frost-orange: 251, 146, 60;
-  --frost-red: 248, 85, 100;
-  --frost-violet: 167, 139, 250;
-  --frost-cyan: 34, 211, 238;
+  --frost-blue: 64 156 255;
+  --frost-green: 16 209 129;
+  --frost-orange: 251 146 60;
+  --frost-red: 248 85 100;
+  --frost-violet: 167 139 250;
+  --frost-cyan: 34 211 238;
 
   --bg: #0a0a0a;
   --fg: #eaf1ff;
