@@ -10,6 +10,8 @@ import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 
+import { portpal } from "./portpal.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOME = process.env.HOME || os.homedir();
 const PORT = Number(process.env.PORT || 7070);
@@ -224,8 +226,65 @@ const api = {
         { name: "ZES Router models", url: `${ROUTER}/v1/models` },
         { name: "gw-proxy", url: "http://127.0.0.1:4400" },
       ],
-      dashboard: { port: PORT, version: "3.0.0", pollMs: 5000 },
+      dashboard: { port: PORT, version: "3.1.0", pollMs: 5000 },
     };
+  },
+
+  /* ---------------- PortPal (port manager) ---------------- */
+
+  async "/api/portpal/ports"() {
+    return await portpal.ports();
+  },
+
+  async "/api/portpal/traffic"() {
+    return portpal.traffic();
+  },
+
+  async "/api/portpal/graph"() {
+    return portpal.graph();
+  },
+
+  async "/api/portpal/events"(q) {
+    const limit = Math.min(Number(q.get("limit")) || 200, 500);
+    return portpal.events(limit);
+  },
+
+  async "/api/portpal/summary"() {
+    return await portpal.summary();
+  },
+
+  async "/api/portpal/config"() {
+    return portpal.config();
+  },
+};
+
+/* POST endpoints (PortPal actions — kill / restart / rescan). */
+
+const apiPost = {
+  async "/api/portpal/kill"(body) {
+    const pid = Number(body?.pid);
+    if (!Number.isInteger(pid)) return { error: "bad_request", detail: "pid (integer) required" };
+    try {
+      const result = await portpal.kill(pid);
+      return { ok: true, pid, ...result };
+    } catch (e) {
+      return { ok: false, pid, error: String(e.message || e).slice(0, 200) };
+    }
+  },
+
+  async "/api/portpal/restart"(body) {
+    const pid = Number(body?.pid);
+    if (!Number.isInteger(pid)) return { error: "bad_request", detail: "pid (integer) required" };
+    try {
+      const result = await portpal.restart(pid);
+      return { ok: true, pid, ...result };
+    } catch (e) {
+      return { ok: false, pid, error: String(e.message || e).slice(0, 200) };
+    }
+  },
+
+  async "/api/portpal/rescan"() {
+    return await portpal.rescan();
   },
 };
 
@@ -251,11 +310,50 @@ function serveStatic(req, res, urlPath) {
   }
 }
 
+function readBody(req, limit = 10_000) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > limit) { reject(new Error("body too large")); req.destroy(); return; }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      if (!chunks.length) return resolve({});
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8"))); }
+      catch { reject(new Error("invalid JSON body")); }
+    });
+    req.on("error", reject);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   if (url.pathname.startsWith("/api/")) {
-    const handler = api[url.pathname];
     res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
+
+    if (req.method === "POST") {
+      const handler = apiPost[url.pathname];
+      if (!handler) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "not_found" }));
+      }
+      try {
+        const body = await readBody(req);
+        const data = await handler(body);
+        res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
+        return res.end(JSON.stringify(data));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: String(e.message).slice(0, 200) }));
+      }
+    }
+
+    const handler = api[url.pathname];
     if (!handler) {
       res.writeHead(404, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ error: "not_found" }));
@@ -272,7 +370,11 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res, url.pathname === "/" ? "/index.html" : url.pathname);
 });
 
+// PortPal background sampler (traffic sparklines + start/stop events)
+portpal.start();
+
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[dash-v3] listening on http://0.0.0.0:${PORT}`);
   console.log(`[dash-v3] roster=${ROSTER_FILE} tasks=${TASKS_FILE} bus=${BUS_FILE}`);
+  console.log(`[dash-v3] portpal scanner armed (sample every ${process.env.PORTPAL_SAMPLE_MS || 3000}ms)`);
 });

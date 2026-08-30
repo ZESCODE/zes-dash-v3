@@ -7,6 +7,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { ModuleCard } from "@/components/ModuleCard";
 import { EventItem } from "@/components/EventItem";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { OverviewPortpal } from "@/components/portpal/OverviewPortpal";
 
 export default function Overview() {
   const { data: o } = useFetch<OverviewData & { error?: string }>("/api/overview", 5000);
@@ -65,6 +66,9 @@ export default function Overview() {
           {agents.length === 0 && <Empty msg="roster.json unreachable" />}
         </div>
       </section>
+
+      {/* PortPal — ports dashboard */}
+      <OverviewPortpal />
 
       {/* latest events */}
       <section className="animate-fade-up">

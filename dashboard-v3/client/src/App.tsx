@@ -16,6 +16,9 @@ import Fleet from "@/routes/Fleet";
 import Tasks from "@/routes/Tasks";
 import Activity from "@/routes/Activity";
 import Infrastructure from "@/routes/Infrastructure";
+import PortsMap from "@/routes/PortsMap";
+import Traffic from "@/routes/Traffic";
+import Services from "@/routes/Services";
 import Settings from "@/routes/Settings";
 
 export default function App() {
@@ -52,6 +55,9 @@ export default function App() {
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/infra" element={<Infrastructure />} />
+          <Route path="/ports" element={<PortsMap />} />
+          <Route path="/traffic" element={<Traffic />} />
+          <Route path="/services" element={<Services />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Overview />} />
         </Routes>

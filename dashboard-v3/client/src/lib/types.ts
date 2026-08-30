@@ -2,7 +2,7 @@
    ZES OS Dashboard v3 — domain types (merged Part1 + Part2)
    ============================================================ */
 
-export type FrostColor = "blue" | "green" | "orange" | "red" | "violet" | "gray";
+export type FrostColor = "blue" | "green" | "orange" | "red" | "violet" | "cyan" | "gray";
 
 export type AgentStatus = "idle" | "running" | "warning" | "error" | "offline";
 

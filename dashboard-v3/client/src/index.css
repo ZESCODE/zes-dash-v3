@@ -142,6 +142,11 @@ body::before {
     box-shadow: inset 0 1px 0 rgba(var(--frost-violet) / 0.2), 0 0 0 1px rgba(var(--frost-violet) / 0.08), 0 22px 60px -28px rgba(var(--frost-violet) / 0.5);
     background-image: linear-gradient(180deg, rgba(var(--frost-violet) / 0.12), rgba(var(--frost-violet) / 0.025));
   }
+  .frost-cyan {
+    border-color: rgba(var(--frost-cyan) / 0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(var(--frost-cyan) / 0.2), 0 0 0 1px rgba(var(--frost-cyan) / 0.08), 0 22px 60px -28px rgba(var(--frost-cyan) / 0.5);
+    background-image: linear-gradient(180deg, rgba(var(--frost-cyan) / 0.12), rgba(var(--frost-cyan) / 0.025));
+  }
 
   .frost-blue:hover,
   .glass-frost-blue:hover { border-color: rgba(var(--frost-blue) / 0.55) !important; }
@@ -151,6 +156,7 @@ body::before {
   .glass-frost-orange:hover { border-color: rgba(var(--frost-orange) / 0.6) !important; }
   .frost-red:hover,
   .glass-frost-red:hover { border-color: rgba(var(--frost-red) / 0.6) !important; }
+  .frost-cyan:hover { border-color: rgba(var(--frost-cyan) / 0.55) !important; }
 
   /* ---------------- Status bullets ---------------- */
   .bullet {
@@ -166,6 +172,7 @@ body::before {
   .bullet-orange { background: rgb(var(--frost-orange)); box-shadow: 0 0 10px rgba(var(--frost-orange) / 0.9); }
   .bullet-red { background: rgb(var(--frost-red)); box-shadow: 0 0 10px rgba(var(--frost-red) / 0.9); }
   .bullet-violet { background: rgb(var(--frost-violet)); box-shadow: 0 0 10px rgba(var(--frost-violet) / 0.9); }
+  .bullet-cyan { background: rgb(var(--frost-cyan)); box-shadow: 0 0 10px rgba(var(--frost-cyan) / 0.9); }
   .bullet-gray { background: rgba(255, 255, 255, 0.35); }
 
   .bullet-pulse::after {

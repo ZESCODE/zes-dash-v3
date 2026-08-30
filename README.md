@@ -1,6 +1,7 @@
 # ZES OS Dashboard v3 — Frost Edition
 
-> Production observability dashboard for the **ZES** multi‑agent orchestration system.
+> Production observability dashboard for the **ZES** multi‑agent orchestration system,
+> with an integrated **PortPal** port manager.
 > Built to run on **Termux / Android** and monitor agents, tasks, the orchestration
 > graph, the live event bus, system health, shared memory banks, and the AI
 > gateway / router infrastructure — in real time, with zero fabricated numbers.
@@ -11,7 +12,7 @@
 
 - [Overview](#overview)
 - [Features](#features)
-- [The 11 pages](#the-11-pages)
+- [The 14 pages](#the-14-pages)
 - [Architecture](#architecture)
 - [Tech stack](#tech-stack)
 - [Requirements](#requirements)
@@ -21,6 +22,7 @@
 - [Configuration](#configuration)
 - [API reference](#api-reference)
 - [Data sources](#data-sources)
+- [PortPal (port manager)](#portpal-port-manager)
 - [Frost design system](#frost-design-system)
 - [Project structure](#project-structure)
 - [Deployment on the ZES Termux node](#deployment-on-the-zes-termux-node)
@@ -49,14 +51,23 @@ UI renders a `–` placeholder. **Numbers are never invented.**
 
 ## Features
 
-- **11 focused pages** — Overview, Agents, Orchestration Flow, Event Stream,
-  System Health, Memory, Fleet, Tasks (Kanban), Activity, Infrastructure, Settings.
-- **Live, read‑only data** — polls local files + gateways; never mutates state.
+- **14 focused pages** — Overview, Agents, Orchestration Flow, Event Stream,
+  System Health, Memory, Fleet, Tasks (Kanban), Activity, Infrastructure,
+  **Ports & Map, Traffic, Services** (PortPal), Settings.
+- **Live, read‑only data** — polls local files + gateways; never mutates state
+  (the PortPal kill/restart actions are the one deliberate exception, and can be
+  disabled with `PORTPAL_ALLOW_KILL=0`).
+- **PortPal port manager** — live listening‑port scanner (`/proc/net/tcp` on
+  Termux; `ss` / `netstat` / `lsof` fallbacks), framework + project detection,
+  per‑port traffic sparklines, start/stop event log, force‑directed **port map**
+  (touch drag + pinch zoom), one‑tap **kill**, **restart**, and kill‑all.
+- **Mobile / Termux first** — hamburger drawer, card layouts below `md`, ≥44px
+  touch targets, sticky tab bars, snap‑scroll chips.
 - **Frost glassmorphism UI** — dark `#0a0a0a` canvas, blurred glass cards,
   four‑color semantic borders (blue / green / orange / red) + a holographic
   memory variant.
-- **Zero‑dependency server** — `server/server.mjs` is plain Node ESM (`node:http`),
-  no `node_modules` required to run the server.
+- **Zero‑dependency server** — `server/server.mjs` + `server/portpal.mjs` are
+  plain Node ESM (`node:http`), no `node_modules` required to run the server.
 - **Self‑contained build** — the React client builds to static `client/dist`.
 - **Offline preview** — `server/mock-infra.mjs` stands in for the gateways so the
   dashboard can be demoed without the real ZES node.
@@ -64,11 +75,11 @@ UI renders a `–` placeholder. **Numbers are never invented.**
 
 ---
 
-## The 11 pages
+## The 14 pages
 
 | # | Page | Route | Data |
 |---|------|-------|------|
-| 1 | Overview | `/` | `/api/overview` (roster + tasks) |
+| 1 | Overview | `/` | `/api/overview` (roster + tasks) + PortPal summary |
 | 2 | Agents | `/agents` | `/api/agents` |
 | 3 | Orchestration Flow | `/flow` | `/api/flow` |
 | 4 | Event Stream | `/events` | `/api/events` (poll, `?limit=`) |
@@ -78,7 +89,10 @@ UI renders a `–` placeholder. **Numbers are never invented.**
 | 8 | Tasks Kanban | `/tasks` | `/api/tasks` — pending / running / completed / failed |
 | 9 | Activity | `/activity` | `/api/activity` (recent events) |
 | 10 | Infrastructure | `/infra` | `/api/infra` (`:20128/api/usage/stats`, `:20128/v1/models`, `:5050/v1/models`) |
-| 11 | Settings | `/settings` | `/api/settings` |
+| 11 | Ports & Map | `/ports` | `/api/portpal/*` — port map + All/Dev/Other tabs, kill & restart |
+| 12 | Traffic | `/traffic` | `/api/portpal/traffic` + `/api/portpal/events` — sparklines & event log |
+| 13 | Services | `/services` | `/api/portpal/ports` — ports grouped by project / framework |
+| 14 | Settings | `/settings` | `/api/settings` + `/api/portpal/config` |
 
 ---
 
@@ -202,6 +216,10 @@ All overrides are environment variables read by `server/server.mjs`:
 | `ZES_MEMORY` | `~/.zes/memory` | Memory banks directory (`*.json`) |
 | `ZES_GW` | `http://127.0.0.1:20128` | 9router / OmniRoute gateway |
 | `ZES_ROUTER` | `http://127.0.0.1:5050` | ZESRouter / BitRouter gateway |
+| `PORTPAL_SAMPLE_MS` | `3000` | PortPal traffic/event sampling interval |
+| `PORTPAL_HISTORY` | `40` | Traffic samples kept per port (sparkline depth) |
+| `PORTPAL_EVENTS_MAX` | `200` | Port start/stop events kept in memory |
+| `PORTPAL_ALLOW_KILL` | `1` | Set `0` to disable kill / restart / kill‑all |
 
 Example:
 
@@ -229,6 +247,15 @@ Unreachable backends yield `{ "error": "unreachable" }`.
 | `/api/infra` | `ZES_GW` + `ZES_ROUTER` | usage stats, gateway models, router models, node info |
 | `/api/memory` | `ZES_MEMORY/*.json` | memory banks with mtime/size |
 | `/api/settings` | server config | sources, endpoints, dashboard version/poll |
+| `/api/portpal/ports` | live scan | listening TCP ports, pid/process/project/framework/cmdline |
+| `/api/portpal/traffic` | sampler | per‑port connection samples (rolling window) |
+| `/api/portpal/graph` | live scan | port‑map nodes + service→service edges |
+| `/api/portpal/events` | logger | port started/stopped events (`?limit=`) |
+| `/api/portpal/summary` | aggregated | totals + top services + recent events (Overview block) |
+| `/api/portpal/config` | config | sampler settings + known framework profiles |
+| `POST /api/portpal/kill` | action | `{ pid }` — SIGTERM → SIGKILL |
+| `POST /api/portpal/restart` | action | `{ pid }` — respawn captured argv in its cwd, detached |
+| `POST /api/portpal/rescan` | action | force a scanner pass now |
 
 ---
 
@@ -250,6 +277,43 @@ UI shows `–`.
 
 ---
 
+## PortPal (port manager)
+
+PortPal functionality (from [wisher567/Portpal](https://github.com/wisher567/Portpal),
+re‑implemented for the Termux node as a zero‑dependency Node module) is folded
+into the dashboard instead of being a separate app:
+
+| PortPal page | Where it lives in dash-v3 |
+|---|---|
+| Dashboard | **Overview** — PortPal stat cards, active service chips with live sparklines, recent start/stop events |
+| Ports (3 tabs) + Port Map | **Ports & Map** (`/ports`) — map on top, All / Dev / Other tabs stacked below |
+| Traffic | **Traffic** (`/traffic`) — per‑port sparkline cards + the port event log (PortPal "logs") |
+| Services | **Services** (`/services`) — ports auto‑grouped by project / framework |
+| Settings | **Settings** — PortPal block (scanner, sampler, kill switch, env vars) |
+
+What the backend does (`server/portpal.mjs`):
+
+- **Scan** — reads `/proc/net/tcp` + `/proc/net/tcp6` (Linux/Termux) and maps
+  socket inodes → pids via `/proc/<pid>/fd`; falls back to `ss`, `netstat`,
+  then `lsof`. No root needed — processes of the same UID (the whole Termux
+  environment) resolve fully; other listeners show as `system`.
+- **Classify** — 34 known port profiles (React, Vite, Postgres, Redis, … plus
+  ZES node services like `:20128` 9router, `:5050` ZESRouter, `:7070` this
+  dashboard) + project detection by walking up from each process' cwd looking
+  for `package.json`, `Cargo.toml`, `go.mod`, … .
+- **Sample** — a background sampler (default 3 s) counts established
+  connections per port (rolling sparkline window) and logs `started`/`stopped`
+  events. State is in‑memory, like PortPal.
+- **Act** — `kill` (SIGTERM → up to 2 s → SIGKILL, refuses pid ≤ 1),
+  `restart` (respawns the captured argv in its original cwd, detached, with a
+  pty-friendly env), `kill-all` (client fans out per‑pid kills, `pid 0`
+  system listeners are skipped). Disable with `PORTPAL_ALLOW_KILL=0`.
+- **Map** — builds the topology graph: an edge is drawn when two listening
+  ports talk to each other directly, or when a listening process' PID is seen
+  connecting to another listener (ephemeral‑port heuristic), exactly like
+  PortPal. The client renders it with a small built‑in force simulation —
+  no d3 dependency — with node drag, pan, pinch zoom and tap‑to‑inspect.
+
 ## Frost design system
 
 - Background `#0a0a0a` with a subtle radial gradient in the top‑right.
@@ -258,10 +322,15 @@ UI shows `–`.
 - **4‑color frost semantics** — **blue** = default/main, **green** = running/
   healthy, **orange** = warning/pending, **red** = error/failed. Memory uses a
   **holographic** (violet/cyan conic‑gradient) variant.
-- Sidebar: persistent 240 px on desktop with the 11 lucide icons
+- Sidebar: persistent 240 px on desktop with the 14 lucide icons
   (`LayoutDashboard`, `Users`, `GitBranch`, `Radio`, `HeartPulse`,
-  `BrainCircuit`, `Building2`, `ListTodo`, `Activity`, `Server`, `Settings`);
-  hamburger drawer below 768 px.
+  `BrainCircuit`, `Building2`, `ListTodo`, `Activity`, `Server`, `Waypoints`,
+  `TrendingUp`, `Boxes`, `Settings`); hamburger drawer below 768 px.
+- PortPal nodes/badges add a **cyan** frost accent (frontend frameworks);
+  database = violet, backend = blue, ZES/secure = green, unknown = gray.
+- Mobile-first patterns: PortPal pages use card rows < `md` and a full table
+  ≥ `md`, sticky search + segmented tabs, snap-scroll service chips, bottom
+  inspector sheet on the port map, pinch-zoom/drag on the force graph.
 - Right drawer: live bus feed + router metrics (cache, proxy pool, breakers).
 - Fonts: Inter (UI) + JetBrains Mono (data).
 - Frost CSS custom properties (`--frost-blue`, etc.) are **space‑separated RGB
@@ -276,17 +345,21 @@ UI shows `–`.
 dashboard-v3/
 ├── server/
 │   ├── server.mjs          # Node ESM server, all /api/* routes, serves client/dist
+│   ├── portpal.mjs         # PortPal backend: port scanner, traffic sampler, kill/restart
 │   └── mock-infra.mjs      # optional preview-only gateway mock (do NOT use on node)
 ├── client/
 │   ├── package.json  vite.config.ts  tsconfig.json  index.html
 │   └── src/
 │       ├── main.tsx  App.tsx  index.css
 │       ├── routes/          # Overview, Agents, Flow, EventStream, SystemHealth,
-│       │                    # Memory, Fleet, Tasks, Activity, Infrastructure, Settings
+│       │                    # Memory, Fleet, Tasks, Activity, Infrastructure,
+│       │                    # PortsMap, Traffic, Services, Settings
 │       ├── components/
 │       │   ├── layout/      # TopBar, Sidebar (11 nav items), RightDrawer
 │       │   ├── ui/          # GlassCard, Bullet, ProgressBar, Sparkline, BarChart
 │       │   ├── StatsCard.tsx  ModuleCard.tsx  TaskCard.tsx  EventItem.tsx  PageHeader.tsx
+│       │   ├── portpal/     # PortGraph (force map), PortList (3 tabs), PortBits,
+│       │                    # OverviewPortpal (Overview block)
 │       ├── hooks/useFetch.ts
 │       ├── lib/             # api.ts  theme.ts  types.ts
 │       └── utils/cn.ts

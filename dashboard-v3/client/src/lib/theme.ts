@@ -35,6 +35,7 @@ export const FROST_HEX: Record<Exclude<FrostColor, "gray">, string> = {
   orange: "rgb(251, 146, 60)",
   red: "rgb(248, 85, 100)",
   violet: "rgb(167, 139, 250)",
+  cyan: "rgb(34, 211, 238)",
 };
 
 export function frostCard(c: FrostColor): string {

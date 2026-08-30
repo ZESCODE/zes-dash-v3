@@ -1,10 +1,11 @@
-import { Settings as SettingsIcon, FolderCheck, FolderX, Globe, Cpu, Info } from "lucide-react";
+import { Settings as SettingsIcon, FolderCheck, FolderX, Globe, Cpu, Info, Waypoints } from "lucide-react";
 import { useFetch } from "@/hooks/useFetch";
 import { cn } from "@/utils/cn";
 import { PageHeader } from "@/components/PageHeader";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Bullet } from "@/components/ui/Bullet";
 import { SectionTitle } from "@/routes/Overview";
+import type { PortpalConfig } from "@/lib/portpal";
 
 interface SettingsData {
   node?: { home: string; platform: string; nodeVersion: string; hostname: string };
@@ -15,6 +16,7 @@ interface SettingsData {
 
 export default function Settings() {
   const { data } = useFetch<SettingsData>("/api/settings", 10000);
+  const { data: pp } = useFetch<PortpalConfig>("/api/portpal/config", 10000);
 
   return (
     <div className="space-y-5">
@@ -82,6 +84,37 @@ export default function Settings() {
             <KV k="Home" v={data?.node?.home ?? "–"} />
             <KV k="Hostname" v={data?.node?.hostname ?? "–"} />
           </div>
+        </GlassCard>
+      </section>
+
+      {/* PortPal */}
+      <section className="animate-fade-up">
+        <SectionTitle title="PortPal" hint="port manager" />
+        <GlassCard frost="violet" className="p-4">
+          <div className="flex items-center gap-2 text-[12px] text-white/70">
+            <Waypoints className="size-4 text-frost-violet" /> Port scanner & traffic monitor
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-[11px] sm:grid-cols-4">
+            <KV k="Scanner" v={pp?.scanner ?? "–"} />
+            <KV k="Sample interval" v={pp ? `${pp.sampleMs}ms` : "–"} />
+            <KV k="History / port" v={pp ? `${pp.history} samples` : "–"} />
+            <KV k="Events kept" v={pp ? String(pp.eventsMax) : "–"} />
+            <KV k="Kill / restart" v={pp ? (pp.allowKill ? "enabled" : "disabled") : "–"} />
+            <KV k="Ports tracked" v={pp ? String(pp.portsTracked) : "–"} />
+            <KV k="Port profiles" v={pp ? `${pp.frameworks.length} known` : "–"} />
+            <KV k="Sampler up" v={pp ? `${pp.uptimeSec}s` : "–"} />
+          </div>
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-frost-violet/10 bg-black/20 px-3 py-2">
+            <span
+              className={cn("flex items-center gap-1.5 font-mono text-[10px]", pp?.allowKill ? "text-frost-green" : "text-frost-orange")}
+            >
+              <Bullet color={pp?.allowKill ? "green" : "orange"} /> {pp?.allowKill ? "actions live" : "read-only"}
+            </span>
+            <span className="font-mono text-[9.5px] text-white/35">
+              env: PORTPAL_SAMPLE_MS · PORTPAL_HISTORY · PORTPAL_EVENTS_MAX · PORTPAL_ALLOW_KILL
+            </span>
+          </div>
+          {pp?.note && <p className="mono mt-2 text-[9.5px] text-white/30">{pp.note}</p>}
         </GlassCard>
       </section>
     </div>

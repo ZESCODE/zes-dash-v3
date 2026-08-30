@@ -10,6 +10,9 @@ import {
   ListTodo,
   Activity,
   Server,
+  Waypoints,
+  TrendingUp,
+  Boxes,
   Settings,
   X,
   Hexagon,
@@ -30,6 +33,9 @@ export const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; hint: str
   { to: "/tasks", label: "Tasks Kanban", icon: ListTodo, hint: "4-column board" },
   { to: "/activity", label: "Activity", icon: Activity, hint: "Bus tail · 5s poll" },
   { to: "/infra", label: "Infrastructure", icon: Server, hint: "Raw gateway stats" },
+  { to: "/ports", label: "Ports & Map", icon: Waypoints, hint: "PortPal · map + kill" },
+  { to: "/traffic", label: "Traffic", icon: TrendingUp, hint: "Port connections" },
+  { to: "/services", label: "Services", icon: Boxes, hint: "Grouped by project" },
   { to: "/settings", label: "Settings", icon: Settings, hint: "Endpoints & config" },
 ];
 
