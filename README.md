@@ -1,4 +1,4 @@
-# ZES OS Dashboard v3 — Frost Edition
+# ZES Mesh Console v3 — Frost Edition
 
 > Production observability dashboard for the **ZES** multi‑agent orchestration system,
 > with an integrated **PortPal** port manager.
@@ -13,6 +13,7 @@
 - [Overview](#overview)
 - [Features](#features)
 - [The 14 pages](#the-14-pages)
+- [Workflow mesh model](#workflow-mesh-model)
 - [Architecture](#architecture)
 - [Tech stack](#tech-stack)
 - [Requirements](#requirements)
@@ -61,10 +62,17 @@ UI renders a `–` placeholder. **Numbers are never invented.**
   Termux; `ss` / `netstat` / `lsof` fallbacks), framework + project detection,
   per‑port traffic sparklines, start/stop event log, force‑directed **port map**
   (touch drag + pinch zoom), one‑tap **kill**, **restart**, and kill‑all.
-- **Mobile / Termux first** — hamburger drawer, card layouts below `md`, ≥44px
-  touch targets, sticky tab bars, snap‑scroll chips.
-- **Frost glassmorphism UI** — dark `#0a0a0a` canvas, blurred glass cards,
-  four‑color semantic borders (blue / green / orange / red) + a holographic
+- **Workflow mesh view** — live Control Plane → Agent Mesh → Model Route lanes,
+  role-aware roster grouping, reported links, agent inspection, and task lifecycle
+  counts from the real task store. Missing layers stay explicit; synthetic
+  utilization, throughput, and lead-time figures are not generated.
+- **Inspectable event bus** — 3-second polling, category filters, text search,
+  pause/resume snapshots, expandable event payloads, and failure/source summaries.
+- **Mobile / Termux first** — grouped 14-page navigation with a hamburger drawer,
+  safe-area support, ≥44px touch targets, stacked mesh lanes, and reduced glass/
+  animation cost on small screens.
+- **Frost glass UI** — dark `#0a0a0a` canvas, blurred glass cards, semantic
+  blue / green / orange / red borders, violet/cyan accents, and a holographic
   memory variant.
 - **Zero‑dependency server** — `server/server.mjs` + `server/portpal.mjs` are
   plain Node ESM (`node:http`), no `node_modules` required to run the server.
@@ -81,8 +89,8 @@ UI renders a `–` placeholder. **Numbers are never invented.**
 |---|------|-------|------|
 | 1 | Overview | `/` | `/api/overview` (roster + tasks) + PortPal summary |
 | 2 | Agents | `/agents` | `/api/agents` |
-| 3 | Orchestration Flow | `/flow` | `/api/flow` |
-| 4 | Event Stream | `/events` | `/api/events` (poll, `?limit=`) |
+| 3 | Orchestration Flow | `/flow` | `/api/flow` + `/api/overview` — role-grouped mesh and task lifecycle |
+| 4 | Event Stream | `/events` | `/api/events` (3-second poll, `?limit=`) — search, filters, pause, payload inspection |
 | 5 | System Health | `/health` | `/api/health` (gateway stats + `os.uptime`) |
 | 6 | Memory | `/memory` | `/api/memory` — holographic shared + agent banks |
 | 7 | Fleet / Org | `/fleet` | `/api/fleet` (roster ⨝ tasks) |
@@ -93,6 +101,32 @@ UI renders a `–` placeholder. **Numbers are never invented.**
 | 12 | Traffic | `/traffic` | `/api/portpal/traffic` + `/api/portpal/events` — sparklines & event log |
 | 13 | Services | `/services` | `/api/portpal/ports` — ports grouped by project / framework |
 | 14 | Settings | `/settings` | `/api/settings` + `/api/portpal/config` |
+
+---
+
+## Workflow mesh model
+
+The **Orchestration Flow** page and right-hand inspector show the live roster as
+three dashboard layers:
+
+```text
+Control plane  →  Agent mesh  →  Model route
+coordinate /       specialist /    router / provider
+orchestrate        execution       access
+```
+
+`client/src/lib/workflow.ts` groups agents using their live `id`, `name`, `kind`,
+`role`, and `description` fields. Explicit orchestrators/coordinators are shown
+in the control layer; router/gateway roles are shown in the model-route layer;
+other roster entries stay in the worker mesh. An unpopulated layer is labelled
+rather than filled with demo agents. The visual edges come from `/api/flow`.
+
+Task lifecycle counts and completion progress come from `/api/overview` and the
+current task store. Agent latency is shown only when the source contains a
+sample. The dashboard does not infer throughput, lead time, arrival rate, or
+stage utilization from a static roster. The **Event Stream** polls the event
+JSONL API every three seconds and supports event-type filtering, search, a frozen
+snapshot, and expandable payloads.
 
 ---
 
@@ -322,16 +356,20 @@ What the backend does (`server/portpal.mjs`):
 - **4‑color frost semantics** — **blue** = default/main, **green** = running/
   healthy, **orange** = warning/pending, **red** = error/failed. Memory uses a
   **holographic** (violet/cyan conic‑gradient) variant.
-- Sidebar: persistent 240 px on desktop with the 14 lucide icons
-  (`LayoutDashboard`, `Users`, `GitBranch`, `Radio`, `HeartPulse`,
-  `BrainCircuit`, `Building2`, `ListTodo`, `Activity`, `Server`, `Waypoints`,
-  `TrendingUp`, `Boxes`, `Settings`); hamburger drawer below 768 px.
+- Navigation: grouped 256 px desktop sidebar and mobile hamburger drawer. The
+  first four routes stay ordered as Overview, Agents, Orchestration Flow, and
+  Event Stream; remaining pages are grouped into Operations and Infrastructure.
+  Drawer controls support Escape/backdrop close, safe-area insets, and touch-sized
+  targets.
 - PortPal nodes/badges add a **cyan** frost accent (frontend frameworks);
   database = violet, backend = blue, ZES/secure = green, unknown = gray.
-- Mobile-first patterns: PortPal pages use card rows < `md` and a full table
-  ≥ `md`, sticky search + segmented tabs, snap-scroll service chips, bottom
-  inspector sheet on the port map, pinch-zoom/drag on the force graph.
-- Right drawer: live bus feed + router metrics (cache, proxy pool, breakers).
+- Mobile-first patterns: workflow lanes stack on narrow screens; PortPal pages
+  use card rows < `md` and a full table ≥ `md`, sticky search + segmented tabs,
+  snap-scroll service chips, a bottom map inspector, and pinch-zoom/drag on the
+  force graph. Mobile glass blur and nonessential animation are reduced for
+  Termux/older GPUs.
+- Right drawer: workflow-layer health, live task-state counts, recent bus events,
+  and router metrics (semantic cache, proxy pool, circuit breakers).
 - Fonts: Inter (UI) + JetBrains Mono (data).
 - Frost CSS custom properties (`--frost-blue`, etc.) are **space‑separated RGB
   triples** (`64 156 255`) so they compose with the `rgba(var(--frost) / a)`
@@ -355,13 +393,13 @@ dashboard-v3/
 │       │                    # Memory, Fleet, Tasks, Activity, Infrastructure,
 │       │                    # PortsMap, Traffic, Services, Settings
 │       ├── components/
-│       │   ├── layout/      # TopBar, Sidebar (11 nav items), RightDrawer
+│       │   ├── layout/      # TopBar, grouped Sidebar (14 routes), RightDrawer
 │       │   ├── ui/          # GlassCard, Bullet, ProgressBar, Sparkline, BarChart
 │       │   ├── StatsCard.tsx  ModuleCard.tsx  TaskCard.tsx  EventItem.tsx  PageHeader.tsx
 │       │   ├── portpal/     # PortGraph (force map), PortList (3 tabs), PortBits,
 │       │                    # OverviewPortpal (Overview block)
 │       ├── hooks/useFetch.ts
-│       ├── lib/             # api.ts  theme.ts  types.ts
+│       ├── lib/             # API, theme, types, workflow mesh-layer model
 │       └── utils/cn.ts
 └── README.md
 ```

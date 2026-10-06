@@ -315,6 +315,31 @@ body::before {
 .no-bar { scrollbar-width: none; }
 .no-bar::-webkit-scrollbar { display: none; }
 
+/* Lighten the visual stack for Termux/older mobile GPUs while retaining Frost glass. */
+@media (max-width: 767px) {
+  body::before {
+    background:
+      radial-gradient(680px 440px at 100% 0%, rgba(var(--frost-blue) / 0.12), transparent 62%),
+      radial-gradient(540px 420px at 0% 12%, rgba(120, 90, 255, 0.07), transparent 60%);
+  }
+
+  .glass,
+  .glass-strong,
+  .glass-card,
+  .holo-card {
+    backdrop-filter: blur(12px) saturate(125%);
+    -webkit-backdrop-filter: blur(12px) saturate(125%);
+  }
+
+  .holo-card::before { animation-duration: 24s; opacity: 0.55; }
+  .animate-spin-slow { animation-duration: 28s; }
+}
+
+@media (hover: none) {
+  button,
+  a { touch-action: manipulation; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
