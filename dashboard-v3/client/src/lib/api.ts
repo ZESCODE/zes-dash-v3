@@ -46,4 +46,6 @@ export const autoblogApi = {
   saveSettings: (body: unknown) => postJson<unknown>("/api/autoblog/settings", body),
   updatePost: (body: unknown) => postJson<unknown>("/api/autoblog/post/update", body),
   deletePost: (id: string) => postJson<unknown>("/api/autoblog/post/delete", { id }),
+  facebookTest: () => postJson<unknown>("/api/autoblog/facebook/test", {}),
+  postToFacebook: (id: string) => postJson<unknown>("/api/autoblog/post/facebook", { id }),
 };

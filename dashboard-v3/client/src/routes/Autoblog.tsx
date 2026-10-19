@@ -12,6 +12,7 @@ import {
   X,
   Radio,
   Settings2,
+  Share2,
 } from "lucide-react";
 import { useFetch } from "@/hooks/useFetch";
 import { autoblogApi } from "@/lib/api";
@@ -33,6 +34,7 @@ interface AbStats {
   nextRunMinutes?: number | null;
   autoRun?: boolean;
   config?: { topN?: number; intervalMinutes?: number; sources?: string[] | null; models?: string[]; baseUrl?: string | null };
+  facebook?: { configured?: boolean; pageId?: string; autoPost?: boolean };
   error?: string;
 }
 
@@ -45,6 +47,7 @@ interface AbPost {
   sourceName?: string;
   sourceUrl?: string;
   image?: string | null;
+  fb?: { id: string; kind?: string; at?: number } | null;
 }
 
 interface AbRunStep {
@@ -75,6 +78,7 @@ interface AbSettingShape {
   models?: string[] | null;
   baseUrl?: string | null;
   autoRun?: boolean;
+  facebook?: { autoPost?: boolean };
 }
 
 interface AbSettingsForm {
@@ -84,6 +88,7 @@ interface AbSettingsForm {
   models: string;
   baseUrl: string;
   autoRun: boolean;
+  fbAutoPost: boolean;
 }
 
 const SOURCE_OPTIONS = ["hn", "trendingai"];
@@ -114,6 +119,7 @@ export default function Autoblog() {
         models: (settings.models ?? []).join(", "),
         baseUrl: settings.baseUrl ?? "",
         autoRun: settings.autoRun !== false,
+        fbAutoPost: !!settings.facebook?.autoPost,
       });
     }
   }, [settings, form]);
@@ -195,6 +201,9 @@ export default function Autoblog() {
               >
                 <ImagePlus className="size-3.5" /> {busy === "backfill" ? "backfilling…" : "Backfill images"}
               </button>
+              <button type="button" disabled={!!busy} onClick={testFb} className={btn("neutral")} title="Check Facebook page credentials">
+                <Share2 className="size-3.5" /> {busy === "fbtest" ? "checking…" : "Test Facebook"}
+              </button>
               <button type="button" disabled={!!busy} onClick={() => { refresh(); refreshRun(); }} className={btn("neutral")}>
                 <RefreshCw className={cn("size-3.5", busy === "refresh" && "animate-spin")} /> Refresh
               </button>
@@ -260,11 +269,65 @@ export default function Autoblog() {
                   </Field>
                 </div>
 
+                <Field label="Facebook auto-post">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, fbAutoPost: !form.fbAutoPost })}
+                      className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-[11px]", form.fbAutoPost ? "border-frost-blue/30 bg-frost-blue/10 text-frost-blue" : "border-white/10 bg-white/5 text-white/50")}
+                    >
+                      <Bullet color={form.fbAutoPost ? "blue" : "gray"} /> {form.fbAutoPost ? "on publish" : "off"}
+                    </button>
+                    <span className={cn("font-mono text-[10px]", stats.facebook?.configured ? "text-frost-green/80" : "text-frost-orange/80")}>
+                      {stats.facebook?.configured ? `page ${stats.facebook.pageId ?? ""}` : "token missing — set FB_PAGE_ACCESS_TOKEN"}
+                    </span>
+                  </div>
+                </Field>
+
                 <Field label="Sources">
                   <div className="flex flex-wrap gap-2">
                     {SOURCE_OPTIONS.map((s) => {
                       const on = form.sources.includes(s);
-                      return (
+  async function testFb() {
+    setBusy("fbtest");
+    setMsg(null);
+    try {
+      const r = (await autoblogApi.facebookTest()) as {
+        ok?: boolean;
+        configured?: boolean;
+        page?: { name?: string };
+        error?: string;
+      };
+      if (r?.ok) {
+        setMsg({ kind: "ok", text: `facebook ok · ${r.page?.name ?? stats?.facebook?.pageId ?? "page"}` });
+      } else {
+        setMsg({ kind: "err", text: r?.error === "not configured" ? "facebook token not configured" : r?.error ?? "facebook check failed" });
+      }
+      await refresh();
+    } catch (e) {
+      setMsg({ kind: "err", text: e instanceof Error ? e.message : "request failed" });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function postFb(p: AbPost) {
+    if (!confirm(`Publish "${p.title}" to the Facebook page now?`)) return;
+    setBusy("fb-" + p.id);
+    setMsg(null);
+    try {
+      const r = (await autoblogApi.postToFacebook(p.id)) as { ok?: boolean; error?: string; url?: string };
+      if (r?.ok) setMsg({ kind: "ok", text: "posted to facebook" });
+      else setMsg({ kind: "err", text: r?.error ?? "facebook publish failed" });
+      await refresh();
+    } catch (e) {
+      setMsg({ kind: "err", text: e instanceof Error ? e.message : "request failed" });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
                         <button
                           key={s}
                           type="button"
@@ -303,6 +366,7 @@ export default function Autoblog() {
                             models: form.models.trim(),
                             baseUrl: form.baseUrl.trim() || null,
                             autoRun: form.autoRun,
+                            facebook: { autoPost: form.fbAutoPost },
                           }),
                         "settings saved",
                       )
@@ -372,6 +436,27 @@ export default function Autoblog() {
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5">
+                        {p.fb ? (
+                          <a
+                            href={`https://www.facebook.com/${p.fb.id}`}
+                            target="_blank"
+                            rel="noopener"
+                            className={btn("blue", "icon")}
+                            title="View on Facebook"
+                          >
+                            <Share2 className="size-3.5" />
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={!!busy}
+                            onClick={() => postFb(p)}
+                            className={btn("neutral", "icon")}
+                            title="Post to Facebook"
+                          >
+                            <Share2 className={cn("size-3.5", busy === "fb-" + p.id && "animate-pulse")} />
+                          </button>
+                        )}
                         <button type="button" disabled={!!busy} onClick={() => startEdit(p)} className={btn("neutral", "icon")} title="Edit">
                           <Pencil className="size-3.5" />
                         </button>

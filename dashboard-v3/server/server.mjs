@@ -414,6 +414,16 @@ const apiPost = {
     if (!id) return { error: "bad_request", detail: "id required" };
     return await fetchAutoblog(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE" });
   },
+
+  async "/api/autoblog/facebook/test"() {
+    return await fetchAutoblog("/api/facebook/test", { method: "POST", timeoutMs: 30000 });
+  },
+
+  async "/api/autoblog/post/facebook"(body) {
+    const id = body && (body.id ?? body.postId);
+    if (!id) return { error: "bad_request", detail: "id required" };
+    return await fetchAutoblog(`/api/posts/${encodeURIComponent(id)}/facebook`, { method: "POST", timeoutMs: 45000 });
+  },
 };
 
 /* ---------------- static + routing ---------------- */
