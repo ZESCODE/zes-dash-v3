@@ -15,6 +15,7 @@ import { portpal } from "./portpal.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOME = process.env.HOME || os.homedir();
 const PORT = Number(process.env.PORT || 7070);
+const VERSION = "3.1.0";
 
 const ROSTER_FILE = process.env.ZES_ROSTER || path.join(HOME, ".hermes", "roster.json");
 const TASKS_FILE = process.env.ZES_TASKS || path.join(HOME, ".hermes", "tasks.json");
@@ -24,6 +25,14 @@ const DIST_DIR = path.join(__dirname, "..", "client", "dist");
 
 const GW = process.env.ZES_GW || "http://127.0.0.1:20128";
 const ROUTER = process.env.ZES_ROUTER || "http://127.0.0.1:5050";
+
+/* AutoBlog (Bonto app) — JSON API proxy. The run key stays server-side. */
+const AUTOBLOG_URL = process.env.AUTOBLOG_URL || "https://autoblog.bonto.run";
+
+function autoblogKey() {
+  if (process.env.AUTOBLOG_RUN_KEY) return process.env.AUTOBLOG_RUN_KEY;
+  try { return fs.readFileSync(path.join(HOME, ".zes", "autoblog.key"), "utf8").trim(); } catch { return ""; }
+}
 
 /* ---------------- helpers ---------------- */
 
@@ -47,6 +56,34 @@ async function fetchJson(url, timeoutMs = 2000) {
     return await res.json();
   } catch {
     return { error: "unreachable" };
+  } finally { clearTimeout(t); }
+}
+
+/* Proxy to the AutoBlog JSON API (adds the key + injects the site base url). */
+async function fetchAutoblog(pathname, { method = "GET", body, timeoutMs = 30000 } = {}) {
+  const key = autoblogKey();
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${AUTOBLOG_URL}${pathname}`, {
+      method,
+      signal: ctrl.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "zes-dash/1.0",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(key ? { Authorization: `Bearer ${key}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; }
+    catch { data = { error: "not_json", status: res.status, snippet: text.slice(0, 160) }; }
+    if (!res.ok) return { error: "autoblog_error", status: res.status, data };
+    return data;
+  } catch (e) {
+    return { error: "unreachable", detail: String(e.message || e).slice(0, 200) };
   } finally { clearTimeout(t); }
 }
 
@@ -104,6 +141,28 @@ const api = {
       warnings: fleet.reduce((s, a) => s + a.warnings, 0),
       errors: fleet.reduce((s, a) => s + a.errors, 0),
       uptimeSec: os.uptime(),
+      ts: new Date().toISOString(),
+    };
+  },
+
+  /* Liveness probe for up.sh / monitors: reports the server itself and the
+     zeso orchestrator daemon (pid file at ~/.zes/os/daemon.pid). */
+  async "/api/status"() {
+    let zesoDaemon = { running: false, pid: null };
+    try {
+      const pid = Number(fs.readFileSync(path.join(HOME, ".zes", "os", "daemon.pid"), "utf8").trim());
+      if (Number.isInteger(pid) && pid > 0) {
+        process.kill(pid, 0);
+        zesoDaemon = { running: true, pid };
+      }
+    } catch { /* no pid file or process gone */ }
+    return {
+      ok: true,
+      service: "zes-dashboard-v3",
+      version: VERSION,
+      port: PORT,
+      uptimeSec: Math.round(process.uptime()),
+      zesoDaemon,
       ts: new Date().toISOString(),
     };
   },
@@ -226,8 +285,45 @@ const api = {
         { name: "ZES Router models", url: `${ROUTER}/v1/models` },
         { name: "gw-proxy", url: "http://127.0.0.1:4400" },
       ],
-      dashboard: { port: PORT, version: "3.1.0", pollMs: 5000 },
+      dashboard: { port: PORT, version: VERSION, pollMs: 5000 },
     };
+  },
+
+  /* ---------------- AutoBlog (Bonto app JSON API) ---------------- */
+
+  async "/api/autoblog"() {
+    const [stats, settings, posts] = await Promise.all([
+      fetchAutoblog("/api/stats"),
+      fetchAutoblog("/api/settings"),
+      fetchAutoblog("/api/posts"),
+    ]);
+    return { base: AUTOBLOG_URL, stats, settings, posts, ts: new Date().toISOString() };
+  },
+
+  async "/api/autoblog/stats"() {
+    return await fetchAutoblog("/api/stats");
+  },
+
+  async "/api/autoblog/posts"() {
+    return await fetchAutoblog("/api/posts");
+  },
+
+  async "/api/autoblog/post"(q) {
+    const id = q.get("id");
+    if (!id) return { error: "bad_request", detail: "id query param required" };
+    return await fetchAutoblog(`/api/posts/${encodeURIComponent(id)}`);
+  },
+
+  async "/api/autoblog/settings"() {
+    return await fetchAutoblog("/api/settings");
+  },
+
+  async "/api/autoblog/runs"() {
+    return await fetchAutoblog("/api/runs");
+  },
+
+  async "/api/autoblog/runs/current"() {
+    return await fetchAutoblog("/api/runs/current");
   },
 
   /* ---------------- PortPal (port manager) ---------------- */
@@ -286,6 +382,38 @@ const apiPost = {
   async "/api/portpal/rescan"() {
     return await portpal.rescan();
   },
+
+  /* ---------------- AutoBlog actions ---------------- */
+
+  async "/api/autoblog/run"(body) {
+    const overrides = {};
+    for (const k of ["topN", "intervalMinutes", "sources", "models", "baseUrl", "wait"]) {
+      if (body && body[k] !== undefined) overrides[k] = body[k];
+    }
+    return await fetchAutoblog("/api/run", { method: "POST", body: overrides, timeoutMs: 120000 });
+  },
+
+  async "/api/autoblog/backfill"() {
+    return await fetchAutoblog("/api/backfill", { method: "POST", timeoutMs: 120000 });
+  },
+
+  async "/api/autoblog/settings"(body) {
+    return await fetchAutoblog("/api/settings", { method: "PUT", body: body || {} });
+  },
+
+  async "/api/autoblog/post/update"(body) {
+    const id = body && (body.id ?? body.postId);
+    if (!id) return { error: "bad_request", detail: "id required" };
+    const patch = {};
+    for (const k of ["title", "summary", "body"]) if (typeof body[k] === "string") patch[k] = body[k];
+    return await fetchAutoblog(`/api/posts/${encodeURIComponent(id)}`, { method: "PUT", body: patch });
+  },
+
+  async "/api/autoblog/post/delete"(body) {
+    const id = body && (body.id ?? body.postId);
+    if (!id) return { error: "bad_request", detail: "id required" };
+    return await fetchAutoblog(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
 };
 
 /* ---------------- static + routing ---------------- */
@@ -310,7 +438,7 @@ function serveStatic(req, res, urlPath) {
   }
 }
 
-function readBody(req, limit = 10_000) {
+function readBody(req, limit = 100_000) {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks = [];

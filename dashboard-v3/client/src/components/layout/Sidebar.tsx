@@ -13,6 +13,7 @@ import {
   Waypoints,
   TrendingUp,
   Boxes,
+  Newspaper,
   Settings,
   X,
   Workflow,
@@ -35,6 +36,7 @@ export const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; hint: str
   { to: "/ports", label: "Ports & Map", icon: Waypoints, hint: "PortPal · map + kill" },
   { to: "/traffic", label: "Traffic", icon: TrendingUp, hint: "Port connections" },
   { to: "/services", label: "Services", icon: Boxes, hint: "Grouped by project" },
+  { to: "/autoblog", label: "AutoBlog", icon: Newspaper, hint: "AI blog · runs · posts" },
   { to: "/settings", label: "Settings", icon: Settings, hint: "Endpoints & config" },
 ];
 

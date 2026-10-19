@@ -19,6 +19,7 @@ import Infrastructure from "@/routes/Infrastructure";
 import PortsMap from "@/routes/PortsMap";
 import Traffic from "@/routes/Traffic";
 import Services from "@/routes/Services";
+import Autoblog from "@/routes/Autoblog";
 import Settings from "@/routes/Settings";
 
 export default function App() {
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/ports" element={<PortsMap />} />
           <Route path="/traffic" element={<Traffic />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/autoblog" element={<Autoblog />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Overview />} />
         </Routes>

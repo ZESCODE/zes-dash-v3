@@ -7,6 +7,17 @@ export async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+export async function postJson<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+  });
+  const data = (await res.json().catch(() => ({}))) as T;
+  if (!res.ok) throw new Error(`${path}: ${res.status}`);
+  return data;
+}
+
 export const api = {
   overview: () => getJson<import("./types").OverviewData | import("./types").Unreachable>("/api/overview"),
   agents: () => getJson<{ agents: import("./types").FleetAgent[] } | import("./types").Unreachable>("/api/agents"),
@@ -19,4 +30,20 @@ export const api = {
   infra: () => getJson<Record<string, unknown>>("/api/infra"),
   memory: () => getJson<Record<string, unknown>>("/api/memory"),
   settings: () => getJson<Record<string, unknown>>("/api/settings"),
+};
+
+/* AutoBlog control API (proxied through the dashboard server). */
+export const autoblogApi = {
+  all: () => getJson<unknown>("/api/autoblog"),
+  stats: () => getJson<unknown>("/api/autoblog/stats"),
+  posts: () => getJson<unknown>("/api/autoblog/posts"),
+  settings: () => getJson<unknown>("/api/autoblog/settings"),
+  runs: () => getJson<unknown>("/api/autoblog/runs"),
+  currentRun: () => getJson<unknown>("/api/autoblog/runs/current"),
+  getPost: (id: string) => getJson<unknown>(`/api/autoblog/post?id=${encodeURIComponent(id)}`),
+  run: (body?: unknown) => postJson<unknown>("/api/autoblog/run", body),
+  backfill: () => postJson<unknown>("/api/autoblog/backfill"),
+  saveSettings: (body: unknown) => postJson<unknown>("/api/autoblog/settings", body),
+  updatePost: (body: unknown) => postJson<unknown>("/api/autoblog/post/update", body),
+  deletePost: (id: string) => postJson<unknown>("/api/autoblog/post/delete", { id }),
 };
