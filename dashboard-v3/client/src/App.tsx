@@ -20,6 +20,7 @@ import PortsMap from "@/routes/PortsMap";
 import Traffic from "@/routes/Traffic";
 import Services from "@/routes/Services";
 import Autoblog from "@/routes/Autoblog";
+import VSCode from "@/routes/VSCode";
 import Settings from "@/routes/Settings";
 
 export default function App() {
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/traffic" element={<Traffic />} />
           <Route path="/services" element={<Services />} />
           <Route path="/autoblog" element={<Autoblog />} />
+          <Route path="/vscode" element={<VSCode />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Overview />} />
         </Routes>

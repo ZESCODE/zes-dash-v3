@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Termux VS Code — Mobile Control Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Lightweight syntax highlight (optional Prism) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" />
+</head>
+<body>
+  <!-- Frost ambient (matches dashboard #0a0a0a + radial top-right) -->
+  <div class="ambient" aria-hidden="true"></div>
+
+  <!-- Fixed Top Bar -->
+  <header class="topbar" role="banner">
+    <button id="hamburger" class="icon-btn hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="drawer">☰</button>
+    <div class="brand">
+      <div class="brand-mark"><span class="hex"></span></div>
+      <div class="brand-text">
+        <strong>ZES <span>Control Center</span></strong>
+        <small id="wsTitle">~/zes-os · code-server :8181</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="connDot" class="conn conn--offline" title="WebSocket status"><i></i> OFFLINE</span>
+      <button id="zoomReset" class="icon-btn" title="Reset zoom" aria-label="Reset zoom">⟲</button>
+      <button id="reconnectBtn" class="btn btn--primary" aria-label="Reconnect WebSocket">Reconnect</button>
+    </div>
+  </header>
+
+  <!-- Hamburger Drawer (80% width) -->
+  <div id="drawerScrim" class="scrim hidden" aria-hidden="true"></div>
+  <aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-label="Navigation menu" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-brand"><span class="brand-mark small"></span> ZES MESH</div>
+      <button id="drawerClose" class="icon-btn" aria-label="Close navigation">✕</button>
+    </div>
+    <nav class="drawer-nav">
+      <p class="nav-label">WORKSPACE</p>
+      <a href="#explorer" data-jump="explorer"><span>📁</span> Workspace Explorer</a>
+      <a href="#extensions" data-jump="extensions"><span>🧩</span> Extensions</a>
+      <a href="#scm" data-jump="scm"><span>⎇</span> Source Control</a>
+      <a href="#settings" data-jump="settings"><span>⚙</span> Settings</a>
+      <div class="divider"></div>
+      <button id="drawerReconnect" class="nav-cta">↻ Reconnect</button>
+      <a href="http://localhost:8181" target="_blank" rel="noreferrer" class="nav-link">↗ Open full VS Code</a>
+    </nav>
+    <div class="drawer-foot">
+      <div class="glass-card frost-blue small">
+        <strong>Local runtime</strong>
+        <small>Termux · OmniRoute :20128</small>
+        <input id="wsUrlInput" class="field mono" value="ws://localhost:8181" spellcheck="false" />
+      </div>
+    </div>
+  </aside>
+
+  <!-- Primary Content Stream — vertical stack, freely scrollable -->
+  <main id="contentStream" class="content-stream">
+    <div id="zoomRoot" class="stack">
+
+      <!-- Quick tabs -->
+      <div class="quick-tabs">
+        <button data-tab="explorer" class="tab active">Explorer</button>
+        <button data-tab="editor" class="tab">Editor</button>
+        <button data-tab="terminal" class="tab">Terminal</button>
+        <button data-tab="chat" class="tab">Chat <span class="badge">BUS</span></button>
+      </div>
+
+      <!-- Panel: Workspace Explorer -->
+      <section id="explorer" class="panel glass-card frost-violet" data-panel="explorer">
+        <button class="panel-head" aria-expanded="true">
+          <span class="panel-icon">📁</span>
+          <span class="panel-title"><b>Workspace Explorer</b><small>~/zes-os · tap to open</small></span>
+          <span class="panel-chevron">▾</span>
+        </button>
+        <div class="panel-body">
+          <div class="search-row">
+            <input id="fileSearch" placeholder="Search files" class="field" />
+            <button id="refreshFiles" class="icon-btn" title="Refresh">↻</button>
+          </div>
+          <div id="fileTree" class="file-tree mono small"></div>
+          <p class="hint">Reveal in VS Code · Quick Open (⌘P) via WebSocket <code>workbench.*</code> commands.</p>
+        </div>
+      </section>
+
+      <!-- Panel: Editor -->
+      <section id="editor" class="panel glass-card frost-blue" data-panel="editor">
+        <button class="panel-head" aria-expanded="true">
+          <span class="panel-icon">❐</span>
+          <span class="panel-title"><b id="editorTitle">zeso.mjs</b><small id="editorSub">javascript · ~/zes-os/zeso.mjs</small></span>
+          <span class="panel-actions" onclick="event.stopPropagation()">
+            <button id="saveBtn" class="btn small">Save</button>
+            <button id="copyBtn" class="icon-btn small">⎘</button>
+          </span>
+          <span class="panel-chevron">▾</span>
+        </button>
+        <div class="panel-body">
+          <div class="editor-meta">
+            <span class="chip">javascript</span><span class="chip muted">UTF-8</span><span class="chip muted">LF</span>
+            <span id="lineCount" class="meta-right">32 lines</span>
+          </div>
+          <div class="editor-wrap">
+            <div id="gutter" class="gutter mono"></div>
+            <textarea id="editor" spellcheck="false" autocorrect="off" autocomplete="off" rows="14"></textarea>
+          </div>
+          <div class="editor-foot mono small">Synced via <b>wsRouter</b> · <span id="dirtyState">in sync</span>
+            <span class="spacer"></span><button class="link-btn" data-cmd="format">Format</button><button class="link-btn" data-cmd="reveal">Reveal</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel: Terminal -->
+      <section id="terminal" class="panel glass-card frost-green" data-panel="terminal">
+        <button class="panel-head" aria-expanded="true">
+          <span class="panel-icon">›_</span>
+          <span class="panel-title"><b>Integrated Terminal</b><small>xterm bridge · horizontally scrollable</small></span>
+          <span class="panel-actions" onclick="event.stopPropagation()">
+            <button id="clearTerm" class="icon-btn small">🗑</button>
+            <button id="termToggle" class="icon-btn small">▶</button>
+          </span>
+          <span class="panel-chevron">▾</span>
+        </button>
+        <div class="panel-body">
+          <pre id="termOut" class="term mono small"></pre>
+          <div class="term-input-row">
+            <span class="prompt">$</span>
+            <input id="termIn" class="field mono" placeholder="git status, npm run build" spellcheck="false" />
+            <button id="termSend" class="btn btn--green">Send</button>
+          </div>
+          <div class="chip-row">
+            <button class="chip" data-cmd="git status">git status</button>
+            <button class="chip" data-cmd="ls -la">ls -la</button>
+            <button class="chip" data-cmd="npm run build">npm run build</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel: Chat (first-class, not iframe) -->
+      <section id="chat" class="panel glass-card frost-violet" data-panel="chat">
+        <button class="panel-head" aria-expanded="true">
+          <span class="panel-icon">💬</span>
+          <span class="panel-title"><b>Chat · Copilot Bridge</b><small>via WebSocket JSON → code-server chat extension</small></span>
+          <span class="panel-chevron">▾</span>
+        </button>
+        <div class="panel-body chat-panel">
+          <div id="chatList" class="chat-list"></div>
+          <div class="chat-input-row">
+            <input id="chatIn" class="field" placeholder="Ask Copilot… (e.g. explain this file)" />
+            <button id="chatSend" class="btn btn--violet">Send</button>
+          </div>
+          <p class="hint mono small">Protocol: <code>{ type: "chat", message, context }</code> → extension. Mock replies when offline.</p>
+        </div>
+      </section>
+
+      <!-- Collapsed extras -->
+      <div class="grid-2">
+        <section id="extensions" class="panel glass-card frost-cyan collapsed" data-panel="extensions">
+          <button class="panel-head" aria-expanded="false"><span class="panel-icon">🧩</span><span class="panel-title"><b>Extensions</b><small>marketplace · remote install</small></span><span class="panel-chevron">▸</span></button>
+          <div class="panel-body hidden">
+            <div class="ext-row"><b>ms-python.python</b><span>Python</span><span class="badge green">installed</span></div>
+            <div class="ext-row"><b>GitHub.copilot</b><span>Copilot</span><span class="badge green">installed</span></div>
+            <button class="btn small w-full">Browse Marketplace</button>
+          </div>
+        </section>
+        <section id="scm" class="panel glass-card frost-green collapsed" data-panel="scm">
+          <button class="panel-head" aria-expanded="false"><span class="panel-icon">⎇</span><span class="panel-title"><b>Source Control</b><small>git · diff · commit</small></span><span class="panel-chevron">▸</span></button>
+          <div class="panel-body hidden">
+            <div class="mono small">~/zes-os · <b class="text-green">main</b> · 3 changes</div>
+            <div class="mono small">M VSCode.tsx <span class="text-orange">~</span></div>
+            <button class="chip">git status</button> <button class="chip">git diff</button>
+          </div>
+        </section>
+      </div>
+
+      <div id="wsLogWrap" class="glass-card small"><b>WebSocket log</b><button id="clearLog" class="link-btn">clear</button><pre id="wsLog" class="mono small"></pre></div>
+      <p class="footer mono small">Termux VS Code Mobile Control Panel · vertical stack · pinch-zoom · hamburger · frost glass · no iframe</p>
+    </div>
+  </main>
+
+  <button id="fabReset" class="fab" aria-label="Reset zoom" title="Reset zoom">⤢</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
