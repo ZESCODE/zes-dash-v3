@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Boxes,
   Newspaper,
+  Code2,
   Settings,
   X,
   Workflow,
@@ -37,6 +38,7 @@ export const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; hint: str
   { to: "/traffic", label: "Traffic", icon: TrendingUp, hint: "Port connections" },
   { to: "/services", label: "Services", icon: Boxes, hint: "Grouped by project" },
   { to: "/autoblog", label: "AutoBlog", icon: Newspaper, hint: "AI blog · runs · posts" },
+  { to: "/vscode", label: "Termux VS Code", icon: Code2, hint: "Mobile panel · :8181 · WebSocket" },
   { to: "/settings", label: "Settings", icon: Settings, hint: "Endpoints & config" },
 ];
 

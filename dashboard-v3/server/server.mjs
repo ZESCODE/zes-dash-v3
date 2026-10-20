@@ -26,6 +26,13 @@ const DIST_DIR = path.join(__dirname, "..", "client", "dist");
 const GW = process.env.ZES_GW || "http://127.0.0.1:20128";
 const ROUTER = process.env.ZES_ROUTER || "http://127.0.0.1:5050";
 
+/* Termux VS Code control panel — code-server integration */
+const CODE_SERVER_URL = process.env.CODE_SERVER_URL || "http://127.0.0.1:8181";
+const CODE_SERVER_ALT = process.env.CODE_SERVER_ALT || "http://127.0.0.1:8080";
+const VSCODE_WORKSPACE = process.env.ZES_WORKSPACE || process.env.VSCODE_WORKSPACE || path.join(HOME, "zes-os");
+const VSCODE_FALLBACK_WS = CODE_SERVER_URL.replace(/^http/, "ws");
+const VSCODE_FALLBACK_WS_ALT = CODE_SERVER_ALT.replace(/^http/, "ws");
+
 /* AutoBlog (Bonto app) — JSON API proxy. The run key stays server-side. */
 const AUTOBLOG_URL = process.env.AUTOBLOG_URL || "https://autoblog.bonto.run";
 
@@ -351,6 +358,106 @@ const api = {
 
   async "/api/portpal/config"() {
     return portpal.config();
+  },
+
+  /* ---------------- Termux VS Code control panel ---------------- */
+
+  async "/api/vscode/status"() {
+    const probe = async (url) => {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 1500);
+      const start = Date.now();
+      try {
+        const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "text/html" } });
+        return { url, status: res.status, ok: res.ok, latencyMs: Date.now() - start };
+      } catch {
+        return { url, status: null, ok: false, latencyMs: null };
+      } finally { clearTimeout(t); }
+    };
+    const [primary, alt] = await Promise.all([probe(CODE_SERVER_URL), probe(CODE_SERVER_ALT)]);
+    const best = primary.ok ? primary : alt.ok ? alt : primary;
+    let wsStat = { workspace: VSCODE_WORKSPACE, ok: false, files: 0 };
+    try {
+      const st = fs.statSync(VSCODE_WORKSPACE);
+      if (st.isDirectory()) {
+        wsStat.ok = true;
+        try { wsStat.files = fs.readdirSync(VSCODE_WORKSPACE).length; } catch { /* ignore */ }
+      }
+    } catch { /* no workspace */ }
+    return {
+      codeServer: best,
+      codeServerAlt: alt,
+      workspace: wsStat,
+      ws: { url: VSCODE_FALLBACK_WS, note: "Native WebSocket via code-server wsRouter (Express upgrade)" },
+      fallback: { wsAlt: VSCODE_FALLBACK_WS_ALT, note: "Alternate port per BUILD_PROMPT.md (8080 fallback)" },
+      ts: new Date().toISOString(),
+    };
+  },
+
+  async "/api/vscode/files"(q) {
+    const root = q.get("root") || VSCODE_WORKSPACE;
+    // Resolve ~ to HOME
+    const resolvedRoot = root.startsWith("~/") ? path.join(HOME, root.slice(2)) : root.startsWith("~") ? HOME : path.resolve(root);
+    const maxDepth = Math.min(Number(q.get("depth")) || 3, 4);
+    const maxFiles = 200;
+    let count = 0;
+
+    function walk(dir, depth) {
+      if (count >= maxFiles) return [];
+      let entries;
+      try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+      // filter noise
+      entries = entries.filter((e) => !["node_modules", ".git", ".next", "dist", "__pycache__", ".cache"].includes(e.name));
+      entries.sort((a, b) => (a.isDirectory() === b.isDirectory() ? a.name.localeCompare(b.name) : a.isDirectory() ? -1 : 1));
+      const out = [];
+      for (const e of entries) {
+        if (count >= maxFiles) break;
+        const full = path.join(dir, e.name);
+        // produce display path with ~ if under HOME
+        const display = full.startsWith(HOME) ? "~" + full.slice(HOME.length) : full;
+        if (e.isDirectory()) {
+          count++;
+          const children = depth < maxDepth ? walk(full, depth + 1) : undefined;
+          out.push({ name: e.name, path: display, type: "dir", children });
+        } else if (e.isFile()) {
+          let size = null;
+          try { size = fs.statSync(full).size; } catch { /* ignore */ }
+          count++;
+          out.push({ name: e.name, path: display, type: "file", size });
+        }
+      }
+      return out;
+    }
+
+    let files = [];
+    try {
+      // check exists
+      const st = fs.statSync(resolvedRoot);
+      if (st.isDirectory()) files = walk(resolvedRoot, 0);
+      else if (st.isFile()) files = [{ name: path.basename(resolvedRoot), path: root, type: "file" }];
+    } catch {
+      return { error: "unreachable", workspace: resolvedRoot, hint: "workspace not found — set ZES_WORKSPACE" };
+    }
+    return { workspace: resolvedRoot.startsWith(HOME) ? "~" + resolvedRoot.slice(HOME.length) : resolvedRoot, files, truncated: count >= maxFiles };
+  },
+
+  async "/api/vscode/file"(q) {
+    const raw = q.get("path");
+    if (!raw) return { error: "bad_request", detail: "path query param required" };
+    const resolved = raw.startsWith("~/") ? path.join(HOME, raw.slice(2)) : raw.startsWith("~") ? path.join(HOME, raw.slice(1)) : path.isAbsolute(raw) ? raw : path.join(VSCODE_WORKSPACE, raw);
+    // security: must be under HOME or VSCODE_WORKSPACE
+    const allowedRoots = [HOME, VSCODE_WORKSPACE.startsWith("~/") ? path.join(HOME, VSCODE_WORKSPACE.slice(2)) : VSCODE_WORKSPACE];
+    const isAllowed = allowedRoots.some((r) => resolved === r || resolved.startsWith(r.endsWith(path.sep) ? r : r + path.sep));
+    if (!isAllowed) return { error: "forbidden", detail: "path outside allowed workspace" };
+    try {
+      const st = fs.statSync(resolved);
+      if (st.isDirectory()) return { error: "is_directory", path: raw, hint: "use /api/vscode/files for directories" };
+      if (st.size > 500_000) return { error: "too_large", detail: `file is ${st.size} bytes — limit 500k` };
+      const content = fs.readFileSync(resolved, "utf8");
+      return { path: raw, resolved: resolved.startsWith(HOME) ? "~" + resolved.slice(HOME.length) : resolved, content, bytes: st.size, mtime: st.mtime.toISOString() };
+    } catch (e) {
+      return { error: "not_found", detail: String(e.message).slice(0, 200) };
+    }
   },
 };
 
